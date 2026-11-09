@@ -207,14 +207,15 @@ export async function runGlpiTotalSync(env, db) {
   //
   // Cada departamento tem a sua entidade do GLPI (ver glpiEntities.js): baixa tudo
   // uma vez e gera um resumo + um cache "cru" por entidade configurada.
+  // Só as entidades dos departamentos (com as filhas) — ver "Busca por entidade" em glpiClient.js.
+  const entities = await configuredEntities(db)
   const [allTickets, techCache] = await Promise.all([
-    glpiFetchTickets(env, { entityName: null, statusCodes: ALL_STATUS_CODES, withOrigin: true }),
+    glpiFetchTickets(env, { entityName: null, entityNames: entities, statusCodes: ALL_STATUS_CODES, withOrigin: true }),
     loadGlpiTechCache(db),
   ])
   // Entidades vistas em TODOS os status (o Backlog só vê as que têm chamado aberto) — lista de escolha do Admin
   const seen = new Set([...(await loadSeenEntities(db)), ...distinctEntityPaths(allTickets)])
   await saveSeenEntities(db, [...seen].sort((x, y) => x.localeCompare(y, 'pt-BR')))
-  const entities = await configuredEntities(db)
   let main = null
   for (const entity of entities) {
     const tickets = allTickets.filter(t => matchesEntity(t.entity, entity))

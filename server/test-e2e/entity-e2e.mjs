@@ -28,6 +28,9 @@ check('Admin define a entidade do RH', r.s === 200 && r.j?.glpi_entity_name === 
 await cron('* * * * *'); await sleep(2500)
 await cron('10,25,40,55 * * * *'); await sleep(3500)
 
+// busca por entidade: o mock registra as trocas de entidade ativa
+check('Backlog/Total buscaram por entidade (changeActiveEntities)', ((await (await fetch(MOCK + '/__stats')).json()).entityChanges || 0) > 0)
+
 // lista de entidades vistas no GLPI
 r = await call('u-test', 'GET', '/api/admin/glpi/entities')
 check('Admin enxerga as entidades que existem no GLPI', Array.isArray(r.j) && r.j.includes('Entidade raiz > SERVICE DESK') && r.j.includes('Entidade raiz > RH Interno'), JSON.stringify(r.j))

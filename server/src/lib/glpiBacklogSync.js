@@ -181,8 +181,10 @@ export async function runGlpiBacklogSync(env, db) {
   // baixa os chamados abertos UMA vez (de todas as entidades que o token enxerga —
   // o filtro por entidade já era feito aqui no código, depois da busca) e gera um
   // resumo por entidade configurada, guardado com id `entity:<nome>`.
+  // Só as entidades dos departamentos (com as filhas) — ver "Busca por entidade" em glpiClient.js.
+  const entities = await configuredEntities(db)
   const [allTickets, techCache] = await Promise.all([
-    glpiFetchTickets(env, { entityName: null, statusCodes: GLPI_OPEN_STATUS_CODES, withCategory: true }),
+    glpiFetchTickets(env, { entityName: null, entityNames: entities, statusCodes: GLPI_OPEN_STATUS_CODES, withCategory: true }),
     loadGlpiTechCache(db),
   ])
   // (Não grava mais a lista de entidades vistas aqui: este sync só vê chamados
@@ -190,7 +192,6 @@ export async function runGlpiBacklogSync(env, db) {
   // sumia do Admin. Quem acumula é o Total de Chamados; o cadastro completo vem
   // de GET /admin/glpi/entities.)
 
-  const entities = await configuredEntities(db)
   const statements = []
   let main = null
   for (const entity of entities) {

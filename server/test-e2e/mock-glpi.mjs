@@ -20,7 +20,7 @@ function add(name, content, { status = 17, entity = SD, created = '2026-10-15 09
 }
 
 function seed() {
-  tickets.clear(); nextId = 20000; stats.gets = 0; stats.searches = 0; stats.solutions = []; stats.created = []; stats.actors = []
+  tickets.clear(); nextId = 20000; stats.gets = 0; stats.searches = 0; stats.solutions = []; stats.created = []; stats.actors = []; stats.entityChanges = 0
   // 60 chamados do MESMO feriado, um por sala (o caso real: 201)
   for (let i = 1; i <= 60; i++) add('Ano Novo - Feriado', reservation({ name: 'Ano Novo - Feriado', room: `00 - Prédio Principal - 01 - SEDE - SALA ${String(i).padStart(3, '0')}`, start: '06:00', end: '23:15' }))
   // 2ª leva do mesmo feriado: outro horário (07:00–22:40, antes 06:00–23:15), salas de outro prédio
@@ -49,6 +49,14 @@ function seed() {
 }
 seed()
 
+const ENTITIES = [
+  { id: 0, name: 'Entidade raiz', completename: 'Entidade raiz' },
+  { id: 4, name: 'SERVICE DESK', completename: 'Entidade raiz > SERVICE DESK' },
+  { id: 9, name: 'GENTE E GESTÃO', completename: 'Entidade raiz > GENTE E GESTÃO' },
+  { id: 12, name: 'RH Interno', completename: 'Entidade raiz > RH Interno' },
+]
+let activeEntity = null // entidade ativa da sessão (null = todas)
+
 const json = (res, code, body) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)) }
 
 http.createServer((req, res) => {
@@ -56,8 +64,22 @@ http.createServer((req, res) => {
   const p = url.pathname
   if (p === '/__stats') return json(res, 200, { ...stats, tickets: [...tickets.values()].map(t => ({ id: t.id, status: t.status })) })
   if (p === '/__reset') { seed(); return json(res, 200, { ok: true }) }
-  if (p.endsWith('/initSession')) return json(res, 200, { session_token: 'tok' })
-  if (p.endsWith('/killSession')) return json(res, 200, {})
+  if (p.endsWith('/initSession')) { activeEntity = null; return json(res, 200, { session_token: 'tok' }) }
+  if (p.endsWith('/killSession')) { activeEntity = null; return json(res, 200, {}) }
+  // Busca por entidade (glpiClient.js): troca a "entidade ativa" da sessão; is_recursive inclui as filhas.
+  if (p.endsWith('/changeActiveEntities') && req.method === 'POST') {
+    let body = ''
+    req.on('data', c => body += c)
+    req.on('end', () => {
+      const { entities_id } = JSON.parse(body)
+      const ent = ENTITIES.find(e => e.id === Number(entities_id))
+      if (!ent) return json(res, 400, ['ERROR_ENTITY', 'entidade desconhecida'])
+      activeEntity = ent.completename
+      stats.entityChanges = (stats.entityChanges || 0) + 1
+      json(res, 200, true)
+    })
+    return
+  }
   // Técnicos atribuídos (type 2) e usuários — pros gráficos "por técnico".
   // Paginação: tudo na 1ª página, vazio depois.
   const firstPage = () => !(Number((url.searchParams.get('range') || '0-0').split('-')[0]) > 0)
@@ -83,11 +105,7 @@ http.createServer((req, res) => {
     ] : [])
   }
   // Cadastro de entidades — inclui uma SEM nenhum chamado (GENTE E GESTÃO)
-  if (p.endsWith('/apirest.php/Entity')) return json(res, 200, [
-    { id: 0, name: 'Entidade raiz', completename: 'Entidade raiz' },
-    { id: 4, name: 'SERVICE DESK', completename: 'Entidade raiz > SERVICE DESK' },
-    { id: 9, name: 'GENTE E GESTÃO', completename: 'Entidade raiz > GENTE E GESTÃO' },
-  ])
+  if (p.endsWith('/apirest.php/Entity')) return json(res, 200, firstPage() ? ENTITIES : [])
   if (p.includes('/search/Ticket')) {
     stats.searches++
     const [from, to] = (url.searchParams.get('range') || '0-249').split('-').map(Number)
@@ -96,7 +114,8 @@ http.createServer((req, res) => {
     for (let i = 0; i < 30; i++) {
       if (url.searchParams.get(`criteria[${i}][field]`) === '12') wanted.add(Number(url.searchParams.get(`criteria[${i}][value]`)))
     }
-    const rows = [...tickets.values()].filter(t => wanted.has(t.status)).map(t => ({
+    const visible = t => !activeEntity || t.entity === activeEntity || t.entity.startsWith(`${activeEntity} >`)
+    const rows = [...tickets.values()].filter(t => wanted.has(t.status) && visible(t)).map(t => ({
       2: t.id, 1: t.name, 12: t.status, 3: t.priority, 15: t.date, 19: t.date_mod, 80: t.entity, 7: t.category, 9: t.origin,
     }))
     return json(res, 200, { data: rows.slice(from, to + 1), totalcount: rows.length })

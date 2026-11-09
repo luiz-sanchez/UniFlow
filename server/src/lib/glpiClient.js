@@ -21,6 +21,8 @@
 // execução do cron (15 min) — aceitável; se o volume crescer muito no
 // futuro, dá pra otimizar filtrando também por `date_mod` na busca.
 
+import { matchesEntity } from './glpiEntities.js'
+
 async function glpiInitSession(env) {
   const res = await fetch(`${env.GLPI_BASE_URL}/apirest.php/initSession`, {
     method: 'GET',
@@ -202,9 +204,18 @@ export const OPEN_STATUS_CODES = [1, 2, 3, 4, 10, 13, 14, 15, 16, 17]
 // entidade, não só o backlog em aberto).
 export const ALL_STATUS_CODES = [1, 2, 3, 4, 5, 6, 10, 13, 14, 15, 16, 17]
 
+// Aviso no log quando uma busca paginada encosta no teto de páginas — antes
+// isso cortava os dados em silêncio (nov/2026: o Total de Chamados passou dos
+// 15.000 chamados do teto antigo sem ninguém perceber).
+function warnIfNearCap(what, rows, pageSize, maxPages) {
+  const cap = pageSize * maxPages
+  if (rows >= cap) console.warn(`[glpi] ${what}: atingiu o teto de ${cap} registros — os dados podem estar CORTADOS. Aumente maxPages.`)
+  else if (rows >= cap * 0.8) console.warn(`[glpi] ${what}: ${rows} de ${cap} registros (mais de 80% do teto).`)
+}
+
 async function glpiSearchTicketsByStatus(env, sessionToken, entityName, statusCodes, extraFields = []) {
   const pageSize = 500
-  const maxPages = 30 // até 15.000 chamados — folga generosa sobre o esperado
+  const maxPages = 40 // até 20.000 chamados por entidade (era 30 = 15.000, já estourado em nov/2026 quando a busca trazia todas as entidades)
   const criteria = statusCodes
     .map((code, i) => i === 0
       ? `criteria[0][field]=12&criteria[0][searchtype]=equals&criteria[0][value]=${code}`
@@ -228,6 +239,7 @@ async function glpiSearchTicketsByStatus(env, sessionToken, entityName, statusCo
     rows.push(...batch)
     if (batch.length < pageSize) break // última página
   }
+  warnIfNearCap('search/Ticket', rows.length, pageSize, maxPages)
   return entityName ? rows.filter(r => String(r['80'] || '').includes(entityName)) : rows
 }
 
@@ -243,7 +255,9 @@ async function glpiSearchTicketsByStatus(env, sessionToken, entityName, statusCo
 // baixar a tabela inteira pra filtrar no código — sem alternativa mais leve
 // disponível nessa instalação.
 async function glpiFetchTechnicianLinks(env, sessionToken) {
-  const links = await glpiFetchPaginated(env, sessionToken, 'Ticket_User', { expandDropdowns: false, pageSize: 2000, maxPages: 20 })
+  // maxPages 30 = 60.000 vínculos (eram 20 = 40.000; a tabela já tinha 39.235 em nov/2026).
+  // Cada página conta no limite de 50 subrequests do tick — 30 + User + sessão ainda cabe.
+  const links = await glpiFetchPaginated(env, sessionToken, 'Ticket_User', { expandDropdowns: false, pageSize: 2000, maxPages: 30 })
   return links
     .filter(l => Number(l.type) === 2 && l.tickets_id && l.users_id)
     .map(l => ({ ticketId: l.tickets_id, userId: l.users_id }))
@@ -265,7 +279,65 @@ async function glpiFetchPaginated(env, sessionToken, itemtype, { expandDropdowns
     all.push(...batch)
     if (batch.length < pageSize) break
   }
+  warnIfNearCap(itemtype, all.length, pageSize, maxPages)
   return all
+}
+
+// ── Busca por entidade (nov/2026) ──────────────────────────────────────────
+// Antes, o Backlog (todo minuto) e o Total (a cada 15 min) baixavam os chamados
+// de TODAS as entidades e filtravam aqui no código — e a Entidade raiz tinha
+// ~5.000 chamados abertos que nenhum departamento usa: 11 páginas por minuto
+// (660 chamadas/hora ao GLPI) pra aproveitar ~100 chamados.
+// Agora a busca roda uma vez por entidade configurada, com a "entidade ativa"
+// da sessão trocada via /changeActiveEntities (is_recursive = inclui as filhas).
+// Isso evita o filtro E/OU de criteria, que já se mostrou frágil aqui.
+// Se qualquer passo falhar, quem chama volta para a busca completa de antes.
+async function glpiEntityIdsFor(env, sessionToken, names) {
+  const rows = await glpiFetchPaginated(env, sessionToken, 'Entity', { expandDropdowns: false, pageSize: 1000, maxPages: 3 })
+  const all = rows.map(e => ({ id: Number(e.id), path: String(e.completename || e.name || '').trim() })).filter(e => e.path)
+  const ids = new Set()
+  for (const name of names) {
+    // As entidades que casam com o nome, ficando só as do topo da árvore
+    // (as filhas já vêm junto pelo is_recursive).
+    const matches = all.filter(e => matchesEntity(e.path, name)).sort((a, b) => a.path.length - b.path.length)
+    if (!matches.length) return null // entidade configurada não existe no GLPI → busca completa
+    const tops = []
+    for (const m of matches) if (!tops.some(t => m.path.startsWith(`${t.path} >`))) tops.push(m)
+    for (const t of tops) ids.add(t.id)
+  }
+  return [...ids]
+}
+
+async function glpiChangeActiveEntity(env, sessionToken, entityId) {
+  const res = await fetch(`${env.GLPI_BASE_URL}/apirest.php/changeActiveEntities`, {
+    method: 'POST',
+    headers: { 'App-Token': env.GLPI_APP_TOKEN, 'Session-Token': sessionToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entities_id: entityId, is_recursive: true }),
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`GLPI changeActiveEntities(${entityId}) respondeu ${res.status}: ${body.slice(0, 200)}`)
+  }
+}
+
+// Uma sessão própria (a entidade ativa fica "suja" depois); devolve null se não deu.
+async function glpiSearchByEntities(env, entityNames, statusCodes, extra) {
+  const sessionToken = await glpiInitSession(env)
+  try {
+    const ids = await glpiEntityIdsFor(env, sessionToken, entityNames)
+    if (!ids || !ids.length) return null
+    const byId = new Map()
+    for (const id of ids) {
+      await glpiChangeActiveEntity(env, sessionToken, id)
+      for (const row of await glpiSearchTicketsByStatus(env, sessionToken, null, statusCodes, extra)) byId.set(String(row['2']), row)
+    }
+    return [...byId.values()]
+  } catch (e) {
+    console.warn(`[glpi] busca por entidade falhou (${e.message}) — usando a busca completa`)
+    return null
+  } finally {
+    await glpiKillSession(env, sessionToken)
+  }
 }
 
 // Nome de exibição do técnico: prioriza Nome + Sobrenome (`firstname` +
@@ -305,25 +377,30 @@ async function glpiListSearchOptions(env, sessionToken, itemtype) {
 // já fica perto do limite de 2 MB por linha do D1.
 // `withOrigin`: traz a "Origem da requisição" (campo 9) — só o Total pede, pro
 // gráfico de qual origem/setor mais abre chamado.
-export async function glpiFetchTickets(env, { entityName, statusCodes, withCategory = false, withOrigin = false }) {
-  const sessionToken = await glpiInitSession(env)
-  try {
-    const extra = [...(withCategory ? ['7'] : []), ...(withOrigin ? ['9'] : [])]
-    const searchRows = await glpiSearchTicketsByStatus(env, sessionToken, entityName, statusCodes, extra)
-    return searchRows.map(row => ({
-      ...(withCategory ? { category: row['7'] || null } : {}),
-      ...(withOrigin ? { origin: row['9'] || null } : {}),
-      id: Number(row['2']),
-      name: row['1'],
-      status: row['12'],
-      priority: row['3'],
-      date_creation: row['15'],
-      date_mod: row['19'],
-      entity: row['80'], // "Entidade raiz > SERVICE DESK" — usado pra separar por departamento
-    }))
-  } finally {
-    await glpiKillSession(env, sessionToken)
+// `entityNames`: entidades configuradas nos departamentos — com elas a busca
+// roda só nessas entidades (e filhas); sem elas, ou se falhar, busca tudo.
+export async function glpiFetchTickets(env, { entityName, entityNames = null, statusCodes, withCategory = false, withOrigin = false }) {
+  const extra = [...(withCategory ? ['7'] : []), ...(withOrigin ? ['9'] : [])]
+  let searchRows = entityNames?.length ? await glpiSearchByEntities(env, entityNames, statusCodes, extra) : null
+  if (!searchRows) {
+    const sessionToken = await glpiInitSession(env)
+    try {
+      searchRows = await glpiSearchTicketsByStatus(env, sessionToken, entityName, statusCodes, extra)
+    } finally {
+      await glpiKillSession(env, sessionToken)
+    }
   }
+  return searchRows.map(row => ({
+    ...(withCategory ? { category: row['7'] || null } : {}),
+    ...(withOrigin ? { origin: row['9'] || null } : {}),
+    id: Number(row['2']),
+    name: row['1'],
+    status: row['12'],
+    priority: row['3'],
+    date_creation: row['15'],
+    date_mod: row['19'],
+    entity: row['80'], // "Entidade raiz > SERVICE DESK" — usado pra separar por departamento
+  }))
 }
 
 // Cadastro de entidades do GLPI (o que o token enxerga), como caminho completo
