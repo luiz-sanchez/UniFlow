@@ -216,8 +216,6 @@ const VISIBLE_BOARDS_LIMIT = 6
 export default function Sidebar({ mobileOpen, onClose }) {
   const [collapsed, setCollapsed] = useState(false)
   const [boards, setBoards] = useState([])
-  const [printersCount, setPrintersCount] = useState(null)
-  const [companiesCount, setCompaniesCount] = useState(null)
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(null)
   const [pendingPurchaseCount, setPendingPurchaseCount] = useState(null)
   const [purchaseMonths, setPurchaseMonths] = useState([])
@@ -226,7 +224,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
   const [boardsExpanded, setBoardsExpanded] = useState(false)
   const [menuOpenFor, setMenuOpenFor] = useState(null)
   const menuRef = useRef(null)
-  const { user, logout } = useAuthStore()
+  const { user } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
   const chamadosActive = CHAMADOS_PATHS.includes(location.pathname)
@@ -289,12 +287,10 @@ export default function Sidebar({ mobileOpen, onClose }) {
   // correspondente aqui no menu é buscado de novo (o contador sobe/desce sem
   // precisar navegar). Cada recurso tem seu próprio "tick" que entra nas
   // dependências do efeito abaixo.
-  const [liveTick, setLiveTick] = useState({ boards: 0, printers: 0, companies: 0, approvals: 0, purchase: 0, developments: 0, incidents: 0, supplies: 0 })
+  const [liveTick, setLiveTick] = useState({ boards: 0, approvals: 0, purchase: 0, developments: 0, incidents: 0, supplies: 0 })
   const bump = key => setLiveTick(t => ({ ...t, [key]: t[key] + 1 }))
   // Mexer em cartão/coluna de um quadro não muda a lista de quadros do menu.
   useLiveRefresh(['boards'], msg => { if (!msg?.s) bump('boards') })
-  useLiveRefresh(['printers'], () => bump('printers'))
-  useLiveRefresh(['companies'], () => bump('companies'))
   useLiveRefresh(['approvals'], () => bump('approvals'))
   useLiveRefresh(['purchase-requests'], () => bump('purchase'))
   useLiveRefresh(['developments'], () => bump('developments'))
@@ -346,21 +342,9 @@ export default function Sidebar({ mobileOpen, onClose }) {
       .catch(() => {})
   }, [liveTick.boards])
 
-  // Total de impressoras cadastradas (todos os locais) — só pro numerozinho
-  // ao lado do menu; refaz quando alguém (ou esta aba) cadastra/remove.
-  useEffect(() => {
-    api.get('/printers')
-      .then(r => setPrintersCount((r.data || []).length))
-      .catch(() => {})
-  }, [liveTick.printers])
-
-  // Total de filiais cadastradas (as duas empresas somadas) — mesmo
-  // espírito do contador de impressoras acima.
-  useEffect(() => {
-    api.get('/companies')
-      .then(r => setCompaniesCount((r.data || []).length))
-      .catch(() => {})
-  }, [liveTick.companies])
+  // O menu só mostra número do que pede ação (aprovações, compras, incidentes,
+  // insumos no mínimo). Contagens neutras (nº de impressoras/filiais) saíram em
+  // nov/2026: misturavam "existe" com "resolva" e custavam 2 chamadas por aba.
 
   // Quantas aprovações estão esperando MINHA decisão — badge ao lado do
   // menu, mesmo espírito do contador de não lidas nas notificações.
@@ -413,7 +397,6 @@ export default function Sidebar({ mobileOpen, onClose }) {
   // Menus só pro que o cargo da pessoa permite (a regra de verdade é do servidor)
   const can = module => canView(user, module)
 
-  const initials = user?.name?.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase() || '?'
 
   // On mobile we always show labels regardless of desktop collapse state
   const showLabels = !collapsed || mobileOpen
@@ -620,7 +603,6 @@ export default function Sidebar({ mobileOpen, onClose }) {
             {showLabels && (
               <>
                 <span>Impressoras</span>
-                {!!printersCount && <span className={s.navCount}>{printersCount}</span>}
                 <span className={`${s.navGroupChevron} ${printersOpen ? s.open : ''}`}><IconChevronSmall open={printersOpen} /></span>
               </>
             )}
@@ -698,7 +680,6 @@ export default function Sidebar({ mobileOpen, onClose }) {
             {showLabels && (
               <>
                 <span>Empresas</span>
-                {!!companiesCount && <span className={s.navCount}>{companiesCount}</span>}
                 <span className={`${s.navGroupChevron} ${companiesOpen ? s.open : ''}`}><IconChevronSmall open={companiesOpen} /></span>
               </>
             )}
@@ -905,7 +886,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
             )}
             {showLabels && (
               <button type="button" className={s.showMoreBtn} onClick={() => setShowArchivedBoards(true)}>
-                📦 Quadros arquivados
+                <IconArchive /> Quadros arquivados
               </button>
             )}
           </div>
@@ -915,19 +896,8 @@ export default function Sidebar({ mobileOpen, onClose }) {
 
         {/* Footer */}
         <div className={s.footer}>
-          {showLabels && (
-            <div className={s.userInfo}>
-              <div className={s.userAvatar}>{initials}</div>
-              <div className={s.userMeta}>
-                <span className={s.userName}>{user?.name}</span>
-                <span className={s.userEmail}>{user?.email}</span>
-              </div>
-            </div>
-          )}
+          {/* conta, tema e "Sair" ficam no avatar da barra de cima */}
           <div className={s.footerActions}>
-            {showLabels && (
-              <button className={`btn btn-ghost ${s.logoutBtn}`} onClick={logout}>Sair</button>
-            )}
             <button
               className={`btn btn-icon ${s.collapseBtn}`}
               onClick={() => setCollapsed(!collapsed)}

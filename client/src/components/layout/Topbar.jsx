@@ -7,6 +7,7 @@ import { useVisiblePolling } from '../../hooks/useVisiblePolling'
 import { useLiveRefresh } from '../../hooks/useLiveRefresh'
 import { useDepartmentStore, getDeptView, setDeptView } from '../../store/departmentStore'
 import { parseDbTimestamp } from '../../utils/formatDuration'
+import GoTo from './GoTo'
 import s from './Topbar.module.css'
 
 function IconMenu() {
@@ -52,26 +53,18 @@ function IconBell() {
   )
 }
 
-function IconSearch() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"/>
-      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-  )
-}
-
 // Recursos da API (1º pedaço do caminho) cujas rotas criam notificação no servidor
 const NOTIFYING_RESOURCES = ['boards', 'approvals', 'purchase-requests', 'teacher']
 
 export default function Topbar({ onMenuClick }) {
   const [showNotifs, setShowNotifs] = useState(false)
-  const [search, setSearch] = useState('')
+  const [showAccount, setShowAccount] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
   const { notifications, unread, fetch, markRead, markAllRead } = useNotificationStore()
-  const { user } = useAuthStore()
+  const { user, logout } = useAuthStore()
   const { theme, toggle } = useTheme()
   const ref = useRef()
+  const accRef = useRef()
   const location = useLocation()
 
   useEffect(() => { fetch() }, [location.pathname])
@@ -89,9 +82,14 @@ export default function Topbar({ onMenuClick }) {
   useLiveRefresh(NOTIFYING_RESOURCES, fetch)
 
   useEffect(() => {
-    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setShowNotifs(false) }
+    const handler = e => {
+      if (ref.current && !ref.current.contains(e.target)) setShowNotifs(false)
+      if (accRef.current && !accRef.current.contains(e.target)) setShowAccount(false)
+    }
+    const onKey = e => { if (e.key === 'Escape') { setShowNotifs(false); setShowAccount(false) } }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', onKey) }
   }, [])
 
   // "Ver como departamento": só pra quem enxerga todos os departamentos. Estreita
@@ -115,17 +113,7 @@ export default function Topbar({ onMenuClick }) {
         <IconMenu />
       </button>
 
-      {/* Search – hidden on mobile */}
-      <div className={s.searchWrap}>
-        <span className={s.searchIcon}><IconSearch /></span>
-        <input
-          className={s.search}
-          placeholder="Buscar quadros, cartões..."
-          aria-label="Buscar quadros e cartões"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
+      <div className={s.goTo}><GoTo /></div>
 
       <div className={s.actions}>
         {seesAllDepartments && (
@@ -136,36 +124,21 @@ export default function Topbar({ onMenuClick }) {
             aria-label="Ver como departamento"
             title="Ver o sistema como um departamento (só filtra a tela — não muda o seu acesso)"
           >
-            <option value="all">🏢 Todos os departamentos</option>
-            <option value="geral">🌐 Só o que é Geral</option>
-            {departments.map(d => <option key={d.id} value={d.id}>🏢 {d.name}</option>)}
+            <option value="all">Todos os departamentos</option>
+            <option value="geral">Só o que é Geral</option>
+            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         )}
-        {/* Theme toggle */}
-        <button
-          className={`btn btn-icon ${s.themeBtn}`}
-          onClick={handleThemeToggle}
-          title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
-          aria-label={theme === 'dark' ? 'Mudar para o modo claro' : 'Mudar para o modo escuro'}
-        >
-          <span className={s.themeIcon} data-active={theme === 'light'}>
-            <IconSun />
-          </span>
-          <span className={s.themeIcon} data-active={theme === 'dark'}>
-            <IconMoon />
-          </span>
-        </button>
-
         {/* Notifications */}
         <div ref={ref} className={s.notifWrap}>
           <button
             className={`btn btn-icon ${s.notifBtn}`}
-            onClick={() => setShowNotifs(!showNotifs)}
+            onClick={() => { setShowNotifs(!showNotifs); setShowAccount(false) }}
             aria-label={unread > 0 ? `Notificações (${unread} não lidas)` : 'Notificações'}
             aria-expanded={showNotifs}
           >
             <IconBell />
-            {unread > 0 && <span className={s.badge}>{unread > 9 ? '9+' : unread}</span>}
+            {unread > 0 && <span className={s.badge} aria-hidden="true">{unread > 9 ? '9+' : unread}</span>}
           </button>
 
           {showNotifs && (
@@ -173,23 +146,24 @@ export default function Topbar({ onMenuClick }) {
               <div className={s.notifHeader}>
                 <span>Notificações</span>
                 {unread > 0 && (
-                  <button className="btn btn-sm btn-ghost" onClick={markAllRead}>
-                    Marcar todas lidas
+                  <button className={s.linkBtn} onClick={markAllRead}>
+                    Marcar todas como lidas
                   </button>
                 )}
               </div>
               <div className={s.notifList}>
                 {notifications.length === 0 && (
                   <div className={s.empty}>
-                    <span style={{ fontSize: 28, marginBottom: 8, display: 'block' }}>🔔</span>
-                    Sem notificações por aqui
+                    <span className={s.emptyIcon}><IconBell /></span>
+                    Nada novo por aqui. Avisos de cartões, aprovações e compras aparecem neste lugar.
                   </div>
                 )}
                 {notifications.map(n => (
-                  <div
+                  <button
+                    type="button"
                     key={n.id}
                     className={`${s.notifItem} ${!n.read ? s.unread : ''}`}
-                    onClick={() => markRead(n.id)}
+                    onClick={() => { if (!n.read) markRead(n.id) }}
                   >
                     {!n.read && <span className={s.unreadDot} />}
                     <div className={s.notifBody}>
@@ -201,19 +175,44 @@ export default function Topbar({ onMenuClick }) {
                         })}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* User avatar */}
-        <div className={s.userAvatar} title={user?.name}>
-          {user?.avatar && !avatarFailed
-            ? <img src={user.avatar} alt={user.name} referrerPolicy="no-referrer" onError={() => setAvatarFailed(true)} className={s.avatarImg} />
-            : <span>{user?.name?.charAt(0).toUpperCase()}</span>
-          }
+        {/* Conta: nome, tema e sair (antes ficavam soltos no rodapé do menu) */}
+        <div ref={accRef} className={s.accWrap}>
+          <button
+            type="button"
+            className={s.userAvatar}
+            onClick={() => { setShowAccount(!showAccount); setShowNotifs(false) }}
+            aria-label={`Sua conta: ${user?.name || ''}`}
+            aria-expanded={showAccount}
+            aria-haspopup="menu"
+          >
+            {user?.avatar && !avatarFailed
+              ? <img src={user.avatar} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(true)} className={s.avatarImg} />
+              : <span>{user?.name?.charAt(0).toUpperCase()}</span>
+            }
+          </button>
+          {showAccount && (
+            <div className={s.accPanel} role="menu">
+              <div className={s.accHead}>
+                <div className={s.accName}>{user?.name}</div>
+                <div className={s.accMail}>{user?.email}</div>
+              </div>
+              <button type="button" role="menuitem" className={s.accItem} onClick={handleThemeToggle}>
+                {theme === 'dark' ? <IconSun /> : <IconMoon />}
+                {theme === 'dark' ? 'Usar o tema claro' : 'Usar o tema escuro'}
+              </button>
+              <button type="button" role="menuitem" className={`${s.accItem} ${s.accOut}`} onClick={logout}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
+                Sair
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
