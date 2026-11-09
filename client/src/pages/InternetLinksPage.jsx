@@ -103,11 +103,11 @@ function Editor({ link, defaultLocation, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="internet-links-nome-da-operadora" className="label">Nome da operadora</label>
-        <input id="internet-links-nome-da-operadora" autoFocus value={form.provider} onChange={e => setForm(f => ({ ...f, provider: e.target.value }))} placeholder="Ex: Vivo, Claro, Algar..." />
+        <input id="internet-links-nome-da-operadora" autoFocus value={form.provider} onChange={e => setForm(f => ({ ...f, provider: e.target.value }))} placeholder="Ex: Vivo, Claro, Algar…" />
       </div>
       <div className="form-group">
         <label htmlFor="internet-links-velocidade-do-link" className="label">Velocidade do link</label>
-        <input id="internet-links-velocidade-do-link" value={form.speed} onChange={e => setForm(f => ({ ...f, speed: e.target.value }))} placeholder="Ex: 500 Mbps, 1 Gbps..." />
+        <input id="internet-links-velocidade-do-link" value={form.speed} onChange={e => setForm(f => ({ ...f, speed: e.target.value }))} placeholder="Ex: 500 Mbps, 1 Gbps…" />
       </div>
       <div className="form-group">
         <label className={s.checkboxLabel}>
@@ -130,7 +130,7 @@ function Editor({ link, defaultLocation, onClose, onSaved }) {
       <div className="form-group">
         <label htmlFor="internet-links-cep" className="label">CEP</label>
         <input id="internet-links-cep" value={cep} onChange={onCepChange} placeholder="00000-000" inputMode="numeric" />
-        {cepLoading && <p className={s.cepHint}>Buscando endereço...</p>}
+        {cepLoading && <p className={s.cepHint}>Buscando endereço…</p>}
         {cepError && <p role="alert" className={s.fileError}>{cepError}</p>}
       </div>
       <div className="form-group">

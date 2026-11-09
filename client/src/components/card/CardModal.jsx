@@ -95,8 +95,8 @@ export default function CardModal({ boardId, cardId, board, currentUser, onClose
 
   if (loading || !card) {
     return (
-      <Modal title="Carregando..." onClose={onClose} width={760}>
-        <div className={s.loading}>Carregando cartão...</div>
+      <Modal title="Carregando…" onClose={onClose} width={760}>
+        <div className={s.loading}>Carregando cartão…</div>
       </Modal>
     )
   }
@@ -285,7 +285,7 @@ export default function CardModal({ boardId, cardId, board, currentUser, onClose
           <div className={s.main}>
             <section className={s.section}>
               <h3 className={s.sectionTitle}>Descrição</h3>
-              <textarea className={s.desc} rows={4} value={descDraft} onChange={e => setDescDraft(e.target.value)} onBlur={saveDescription} placeholder="Detalhes, links, o que precisa ser feito..." aria-label="Descrição" />
+              <textarea className={s.desc} rows={4} value={descDraft} onChange={e => setDescDraft(e.target.value)} onBlur={saveDescription} placeholder="Detalhes, links, o que precisa ser feito…" aria-label="Descrição" />
             </section>
 
             <section className={s.section}>
@@ -472,7 +472,7 @@ export default function CardModal({ boardId, cardId, board, currentUser, onClose
               ) : (
                 <>
                   <button className={`btn btn-ghost btn-sm ${s.timerStart}`} onClick={startTimer} disabled={starting}>
-                    <LineIcon name="play" /> {starting ? 'Iniciando...' : 'Iniciar cronômetro'}
+                    <LineIcon name="play" /> {starting ? 'Iniciando…' : 'Iniciar cronômetro'}
                   </button>
                   {running && !runningHere && <span className={s.emptyHint}>O cronômetro está rodando em "{running.card_title}".</span>}
                 </>

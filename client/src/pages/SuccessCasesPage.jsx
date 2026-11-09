@@ -8,6 +8,7 @@ import { photoPair } from '../utils/imageResize'
 import Modal from '../components/common/Modal'
 import Reveal from '../components/common/Reveal'
 import LineIcon from '../components/common/LineIcon'
+import { pressable } from '../utils/pressable'
 import s from './SuccessCasesPage.module.css'
 
 // Gestão → Cases de Sucesso: as entregas da TI no ano, para apresentar à
@@ -251,7 +252,7 @@ function Editor({ item, year, onClose, onSaved }) {
       )}
       {error && <p role="alert" className={s.error}>{error}</p>}
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.title.trim() || saving} onClick={save}>
-        {saving ? 'Salvando...' : 'Salvar'}
+        {saving ? 'Salvando…' : 'Salvar'}
       </button>
     </Modal>
   )
@@ -330,7 +331,7 @@ function Detail({ id, stats, year, writable, onClose, onEdit, onDelete, onChange
     load()
   }
 
-  if (!item) return <Modal title="Carregando..." onClose={onClose} width={820}><p className={s.muted}>Carregando...</p></Modal>
+  if (!item) return <Modal title="Carregando…" onClose={onClose} width={820}><p className={s.muted}>Carregando…</p></Modal>
   const p = PILLARS[item.pillar] || PILLARS.gestao
   const result = resultOf(item, stats, year)
 
@@ -371,7 +372,7 @@ function Detail({ id, stats, year, writable, onClose, onEdit, onDelete, onChange
           <div className={s.photos}>
             {item.photos.map(ph => (
               <div key={ph.id} className={s.photo}>
-                <img src={ph.thumb} alt={ph.caption || 'Foto'} onClick={() => setViewing(ph)} />
+                <img src={ph.thumb} alt={ph.caption || 'Foto'} width={150} height={105} {...pressable(() => setViewing(ph))} aria-label={`Ampliar ${ph.caption || 'foto'}`} />
                 {ph.caption && <span className={s.photoCaption}>{ph.caption}</span>}
                 {writable && <button className={s.photoRemove} title="Remover" onClick={() => removePhoto(ph)}>✕</button>}
               </div>
@@ -381,7 +382,7 @@ function Detail({ id, stats, year, writable, onClose, onEdit, onDelete, onChange
             <div className={s.photoAdd}>
               <input value={caption} maxLength={60} onChange={e => setCaption(e.target.value)} placeholder="Legenda (ex: Antes, Depois)" />
               <label className="btn btn-ghost btn-sm">
-                {uploading ? 'Enviando...' : '📷 Adicionar foto'}
+                {uploading ? 'Enviando…' : '📷 Adicionar foto'}
                 <input type="file" accept="image/*" multiple hidden disabled={uploading} onChange={upload} />
               </label>
             </div>
@@ -476,10 +477,10 @@ function DeckDownload({ cases, stats, year }) {
   return (
     <>
       <button className="btn btn-ghost" disabled={!!busy} onClick={() => run('pptx')} title="Baixar a apresentação em PowerPoint (.pptx)">
-        <LineIcon name="download" /> {busy === 'pptx' ? 'Gerando...' : 'PPTX'}
+        <LineIcon name="download" /> {busy === 'pptx' ? 'Gerando…' : 'PPTX'}
       </button>
       <button className="btn btn-ghost" disabled={!!busy} onClick={() => run('pdf')} title="Baixar a apresentação em PDF">
-        <LineIcon name="download" /> {busy === 'pdf' ? 'Gerando...' : 'PDF'}
+        <LineIcon name="download" /> {busy === 'pdf' ? 'Gerando…' : 'PDF'}
       </button>
     </>
   )
@@ -655,7 +656,7 @@ export default function SuccessCasesPage() {
     await api.put('/success-cases/order', { ids }).catch(() => load())
   }
 
-  if (!data) return <div className={s.loading}>Carregando cases...</div>
+  if (!data) return <div className={s.loading}>Carregando cases…</div>
 
   const done = cases.filter(c => c.status === 'concluido').length
   const withSave = cases.filter(c => c.saving_value > 0).sort((a, b) => countedSave(b) - countedSave(a))
@@ -714,7 +715,13 @@ export default function SuccessCasesPage() {
                 {withSave.map(c => {
                   const p = PILLARS[c.pillar] || PILLARS.gestao
                   return (
-                    <tr key={c.id} onClick={() => setOpenId(c.id)}>
+                    <tr
+                      key={c.id}
+                      tabIndex={0}
+                      aria-label={`Abrir o case ${c.title}`}
+                      onClick={() => setOpenId(c.id)}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenId(c.id) } }}
+                    >
                       <td className={s.saveCase}>{c.title}</td>
                       <td><span className={s.pillarText} style={{ color: p.color }}>{p.icon} {p.label}</span></td>
                       <td className={s.num}>{fmtBRL(c.saving_value)}</td>
@@ -759,7 +766,7 @@ export default function SuccessCasesPage() {
               <Reveal key={c.id} delay={Math.min(i, 12) * 40} className={s.card}>
                 <button className={s.cardBtn} onClick={() => setOpenId(c.id)}>
                   {c.cover
-                    ? <img className={s.cover} src={c.cover} alt="" />
+                    ? <img className={s.cover} src={c.cover} alt="" height={140} decoding="async" />
                     : <div className={s.coverIcon} style={{ '--pillar': p.color }}><PillarIcon pillar={c.pillar} size={52} /></div>}
                   <div className={s.cardBody}>
                     <div className={s.cardTop}>

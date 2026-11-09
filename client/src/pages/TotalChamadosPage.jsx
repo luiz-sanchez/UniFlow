@@ -260,7 +260,7 @@ export default function TotalChamadosPage() {
     })
   }, [snapshot, techFilter, statusFilter, monthFilter])
 
-  if (loading) return <div className={s.loading}>Carregando total de chamados...</div>
+  if (loading) return <div className={s.loading}>Carregando total de chamados…</div>
 
   return (
     <div className={s.page}>
@@ -284,7 +284,7 @@ export default function TotalChamadosPage() {
               disabled={refreshing}
               title="Atualiza Backlog, Total de Chamados e Eventos da Agenda juntos"
             >
-              {refreshing ? 'Atualizando...' : 'Atualizar agora'}
+              {refreshing ? 'Atualizando…' : 'Atualizar agora'}
             </button>
           )}
         </div>

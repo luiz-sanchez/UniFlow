@@ -126,7 +126,7 @@ function GlpiPauseCard() {
       </div>
       <button className={`btn btn-sm ${state.paused ? 'btn-primary' : 'btn-ghost'}`} disabled={busy} onClick={toggle}>
         <LineIcon name={state.paused ? 'play' : 'pause'} size={14} />
-        {busy ? 'Salvando...' : state.paused ? 'Religar GLPI' : 'Pausar GLPI'}
+        {busy ? 'Salvando…' : state.paused ? 'Religar GLPI' : 'Pausar GLPI'}
       </button>
     </div>
   )
@@ -296,7 +296,7 @@ export default function AdminPage() {
 
   const syncGlpiNow = async () => {
     setSyncingGlpi(true)
-    setGlpiSyncStatus({ type: 'loading', text: 'Sincronizando...' })
+    setGlpiSyncStatus({ type: 'loading', text: 'Sincronizando…' })
     try {
       const { data } = await api.post('/admin/glpi/sync-now')
       if (data.skipped) {
@@ -336,9 +336,12 @@ export default function AdminPage() {
 
   const resolveRetro = async () => {
     if (!retroList?.length) return
-    if (!window.confirm(`Marcar ${retroList.length} chamado(s) como Solucionado no GLPI? Isso altera os chamados no GLPI.`)) return
+    if (!(await confirmDialog(
+      `Marcar ${retroList.length} chamado(s) como Solucionado no GLPI? Isso altera os chamados no GLPI.`,
+      { title: 'Solucionar retroativos', confirmLabel: 'Solucionar no GLPI' }
+    ))) return
     setRetroBusy(true)
-    setRetroStatus({ type: 'loading', text: 'Solucionando no GLPI...' })
+    setRetroStatus({ type: 'loading', text: 'Solucionando no GLPI…' })
     try {
       const { data } = await api.post('/admin/glpi/resolve-retroactive')
       const err = data.errors?.length ? ` · ${data.errors.length} erro(s): ${data.errors[0].message}` : ''
@@ -383,9 +386,12 @@ export default function AdminPage() {
     const parts = []
     if (dupCount) parts.push(`solucionar ${dupCount} chamado(s) duplicado(s) no GLPI (um lote por minuto, em segundo plano)`)
     if (cleanCount) parts.push(`tirar ${cleanCount} evento(s) repetido(s) já tratado(s) da Agenda`)
-    if (!window.confirm(`Vou ${parts.join(' e ')}, e remover os eventos repetidos da Agenda. Fica só o chamado mais antigo de cada grupo. Confirmar?`)) return
+    if (!(await confirmDialog(
+      `Vou ${parts.join(' e ')}, e remover os eventos repetidos da Agenda. Fica só o chamado mais antigo de cada grupo.`,
+      { title: 'Limpar duplicatas', confirmLabel: 'Limpar duplicatas' }
+    ))) return
     setDupBusy(true)
-    setDupStatus({ type: 'loading', text: 'Limpando duplicatas...' })
+    setDupStatus({ type: 'loading', text: 'Limpando duplicatas…' })
     try {
       const { data } = await api.post('/admin/glpi/resolve-duplicates')
       const err = data.errors?.length ? ` · ${data.errors.length} erro(s): ${data.errors[0].message}` : ''
@@ -412,7 +418,7 @@ export default function AdminPage() {
   const [testStatus, setTestStatus] = useState(null)
   const sendTestEmail = async () => {
     if (!testEmail.trim()) return
-    setTestStatus({ type: 'loading', text: 'Enviando...' })
+    setTestStatus({ type: 'loading', text: 'Enviando…' })
     try {
       const { data } = await api.post('/admin/settings/email-outbox/test', { to: testEmail.trim() })
       if (!data.provider) {
@@ -432,7 +438,7 @@ export default function AdminPage() {
   const outboxRows = outbox.rows ?? outbox.results ?? []
   const pendingOutboxCount = outbox.pendingCount ?? outboxRows.length ?? 0
 
-  if (loading) return <div className={s.loading}>Carregando...</div>
+  if (loading) return <div className={s.loading}>Carregando…</div>
 
   return (
     <div className={s.page}>

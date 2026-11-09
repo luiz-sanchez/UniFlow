@@ -25,7 +25,7 @@ export default function PrinterSupplyHistory({ printer, onClose }) {
 
   return (
     <Modal title={`Insumos — ${printer.model}${printer.department ? ` (${printer.department})` : ''}`} onClose={onClose} width={680}>
-      {!rows ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Carregando...</p> : rows.length === 0 ? (
+      {!rows ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Carregando…</p> : rows.length === 0 ? (
         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Nenhuma troca de insumo registrada nesta impressora ainda. As trocas são registradas em Impressoras → Estoque de insumos (botão Trocar).</p>
       ) : (
         <>

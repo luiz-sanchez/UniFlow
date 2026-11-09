@@ -58,7 +58,7 @@ function Editor({ node, defaultParentId, nodes, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="org-chart-cargo" className="label">Cargo</label>
-        <input id="org-chart-cargo" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="Ex: Gerente TI, Analista, Auxiliar..." />
+        <input id="org-chart-cargo" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="Ex: Gerente TI, Analista, Auxiliar…" />
       </div>
       <div className="form-group">
         <label htmlFor="org-chart-reporta-para" className="label">Reporta para</label>
@@ -69,7 +69,7 @@ function Editor({ node, defaultParentId, nodes, onClose, onSaved }) {
       </div>
       {error && <p role="alert" className={s.fileError}>{error}</p>}
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.name.trim() || saving} onClick={save}>
-        {saving ? 'Salvando...' : node ? 'Salvar alterações' : 'Adicionar ao organograma'}
+        {saving ? 'Salvando…' : node ? 'Salvar alterações' : 'Adicionar ao organograma'}
       </button>
     </Modal>
   )
@@ -426,7 +426,7 @@ export default function OrgChartPage() {
   const nodeById = useMemo(() => Object.fromEntries((nodes || []).map(n => [n.id, n])), [nodes])
   const draggingNode = draggingId ? nodeById[draggingId] : null
 
-  if (loading) return <div className={s.loading}>Carregando organograma...</div>
+  if (loading) return <div className={s.loading}>Carregando organograma…</div>
 
   return (
     <div className={s.page}>

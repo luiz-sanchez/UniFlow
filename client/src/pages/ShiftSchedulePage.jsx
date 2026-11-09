@@ -77,7 +77,7 @@ function PersonModal({ person, onClose, onSaved }) {
       </div>
       {error && <p role="alert" className={s.error}>{error}</p>}
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.name.trim() || saving} onClick={save}>
-        {saving ? 'Salvando...' : person ? 'Salvar alterações' : 'Adicionar à escala'}
+        {saving ? 'Salvando…' : person ? 'Salvar alterações' : 'Adicionar à escala'}
       </button>
     </Modal>
   )

@@ -118,7 +118,7 @@ function Editor({ branch, defaultCompany, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="companies-nome-da-filial" className="label">Nome da filial</label>
-        <input id="companies-nome-da-filial" autoFocus value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Matriz, Filial Centro..." />
+        <input id="companies-nome-da-filial" autoFocus value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Matriz, Filial Centro…" />
       </div>
       <div className="form-group">
         <label htmlFor="companies-cnpj" className="label">CNPJ</label>
@@ -127,7 +127,7 @@ function Editor({ branch, defaultCompany, onClose, onSaved }) {
       <div className="form-group">
         <label htmlFor="companies-cep" className="label">CEP</label>
         <input id="companies-cep" value={cep} onChange={onCepChange} placeholder="00000-000" inputMode="numeric" />
-        {cepLoading && <p className={s.cepHint}>Buscando endereço...</p>}
+        {cepLoading && <p className={s.cepHint}>Buscando endereço…</p>}
         {cepError && <p role="alert" className={s.fileError}>{cepError}</p>}
       </div>
       <div className="form-group">

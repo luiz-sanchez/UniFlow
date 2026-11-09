@@ -16,7 +16,7 @@ export default function GoogleCallback() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#555' }}>
-      Autenticando...
+      Autenticando…
     </div>
   )
 }

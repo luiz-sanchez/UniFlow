@@ -63,7 +63,7 @@ export default function DepartmentModulesModal({ dept, modules, onClose, onSaved
       </ul>
       {error && <p role="alert" className={`${s.msg} ${s.err}`}>{error}</p>}
       <div className={s.actions} style={{ marginTop: 14 }}>
-        <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</button>
+        <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Salvando…' : 'Salvar'}</button>
         <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
       </div>
     </Modal>

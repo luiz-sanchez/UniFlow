@@ -42,7 +42,7 @@ const ChromebookRequestsPage = lazyPage(() => import('./pages/ChromebookRequests
 
 function PrivateRoute({ children }) {
   const { user, token, loading } = useAuthStore()
-  if (loading) return <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--muted)' }}>Carregando...</div>
+  if (loading) return <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--muted)' }}>Carregando…</div>
   if (!token || !user) return <Navigate to="/login" replace />
   return children
 }

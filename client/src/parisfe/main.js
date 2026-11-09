@@ -11,7 +11,7 @@ const VALUES = [
   { name: 'Informalidade', desc: 'Tratar as pessoas com leveza e proximidade, sem perder o profissionalismo no meio do caminho.', quote: ';) arrasoooooooooooooou miga!!!' },
   { name: 'Segurança da informação passada', desc: 'Confirmar antes de afirmar. Informação errada passada adiante custa caro pra outra pessoa.', quote: 'Você tem certeza?' },
   { name: 'Flexibilidade', desc: 'Adaptar a regra ao caso real, sem perder o bom senso nem travar no “não pode”.', quote: 'Olha, já que a regra não te atende, isso aqui não funcionaria para você?' },
-  { name: 'Empatia', desc: 'Se colocar no lugar de quem está pedindo ajuda antes de responder.', quote: 'Eu te entendo! Vou te ajudar...' },
+  { name: 'Empatia', desc: 'Se colocar no lugar de quem está pedindo ajuda antes de responder.', quote: 'Eu te entendo! Vou te ajudar…' },
 ]
 const DWELL_MS = 9000        // modo TV: tempo parado em cada seção
 const IDLE_MS = 15000        // modo TV volta a rolar depois de tanto tempo sem ninguém mexer

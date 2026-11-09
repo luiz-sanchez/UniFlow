@@ -132,7 +132,7 @@ export default function Column({ column, cards, onOpenCard, onAddCard, onToggleP
           <input
             autoFocus
             className={s.quickAdd}
-            placeholder="Título do cartão..."
+            placeholder="Título do cartão…"
             value={title}
             onChange={e => setTitle(e.target.value)}
             onBlur={submit}

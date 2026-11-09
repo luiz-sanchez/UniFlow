@@ -297,7 +297,10 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   **Varredura ui-ux-pro-max (out/2026)**: rótulo `.label` sempre com `htmlFor` + `id` no campo (componente reutilizado usa `useId`);
   `div`/`span` clicável = `{...pressable(fn)}` (`utils/pressable.js`, Enter/Espaço); lista arrastável = `useSortableSensors()` +
   `accessibility={sortableAccessibility(...)}` (`utils/sortableA11y.js`) + botões ‹ › de mover; mensagem de erro `role="alert"`, de status `role="status"`.
-  Pendentes da varredura: título da aba fixo "UniFlow", 2 `window.confirm` no Admin, escala de fonte (21 tamanhos), alvos < 24px, `transition: all`.
+  Pendentes da varredura: escala de fonte (21 tamanhos), alvos < 24px.
+  **web-design-guidelines (09/11/2026)**: título da aba por tela (`pageTitle` em `GoTo.jsx`, lista `PAGES` — tela nova entra lá),
+  confirmações só pelo `confirmDialog` (nada de `window.confirm`), reticências "…" (não "...") nos textos, miniatura com width/height.
+  Ideia não feita: filtros/abas no endereço (link já filtrado).
   Prints locais com o Playwright CLI (`%APPDATA%\npm\playwright-cli.cmd`: `open`, `localstorage-set token ...`, `goto`, `screenshot --filename`).
   Ele roda pelo cmd: `&` na URL corta o resto e `=>` num `eval` vira redirecionamento (cria arquivos lixo na pasta) — use URLs sem `&`
   e `snapshot` pra esperar. Auditoria a11y local: `npm install --no-save axe-core` no client (some quando o npm reinstala).

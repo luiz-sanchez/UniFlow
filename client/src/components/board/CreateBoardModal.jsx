@@ -31,7 +31,7 @@ export default function CreateBoardModal({ onClose, onCreated }) {
           autoFocus
           value={form.name}
           onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-          placeholder="Ex: Marketing, Produto..."
+          placeholder="Ex: Marketing, Produto…"
           onKeyDown={e => e.key === 'Enter' && createBoard()}
         />
       </div>
@@ -59,7 +59,7 @@ export default function CreateBoardModal({ onClose, onCreated }) {
         </div>
       </div>
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.name.trim() || creating} onClick={createBoard}>
-        {creating ? 'Criando...' : 'Criar quadro'}
+        {creating ? 'Criando…' : 'Criar quadro'}
       </button>
     </Modal>
   )

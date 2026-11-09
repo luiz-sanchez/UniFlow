@@ -249,7 +249,7 @@ export default function AgendaPage() {
               rows={2}
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Detalhes do evento..."
+              placeholder="Detalhes do evento…"
             />
           </div>
           <div className="form-group">
@@ -304,7 +304,7 @@ export default function AgendaPage() {
               disabled={!form.title.trim() || !form.event_date || saving}
               onClick={saveEvent}
             >
-              {saving ? 'Salvando...' : editing ? 'Salvar alterações' : 'Criar evento'}
+              {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Criar evento'}
             </button>
           </div>
         </Modal>

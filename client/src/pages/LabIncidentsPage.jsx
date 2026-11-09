@@ -78,13 +78,13 @@ function PhotoPicker({ photos, setPhotos, max, onError }) {
     <div className={s.photoPicker}>
       {photos.map((p, i) => (
         <div key={i} className={s.thumbWrap}>
-          <img src={p.thumb} alt={`Foto ${i + 1}`} className={s.thumb} />
+          <img src={p.thumb} alt={`Foto ${i + 1}`} className={s.thumb} width={92} height={92} />
           <button type="button" className={s.thumbRemove} title="Tirar esta foto" aria-label={`Tirar a foto ${i + 1}`} onClick={() => setPhotos(prev => prev.filter((_, j) => j !== i))}>×</button>
         </div>
       ))}
       {photos.length < max && (
         <label className={s.addPhoto}>
-          {busy ? 'Preparando...' : <><LineIcon name="camera" size={20} /><span>Adicionar fotos</span></>}
+          {busy ? 'Preparando…' : <><LineIcon name="camera" size={20} /><span>Adicionar fotos</span></>}
           <input type="file" accept="image/*" multiple hidden onChange={pick} disabled={busy} />
         </label>
       )}
@@ -124,7 +124,7 @@ function IncidentForm({ incident, building, knownLabs, onClose, onSaved }) {
   const save = async () => {
     if (!valid) return
     setError('')
-    setSaving('Salvando...')
+    setSaving('Salvando…')
     try {
       const saved = incident
         ? (await api.put(`/lab-incidents/${incident.id}`, form)).data
@@ -170,7 +170,7 @@ function IncidentForm({ incident, building, knownLabs, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="lab-incidents-o-que-aconteceu-detalhes" className="label">O que aconteceu (detalhes)</label>
-        <textarea id="lab-incidents-o-que-aconteceu-detalhes" rows={4} value={form.description} maxLength={5000} onChange={e => set('description', e.target.value)} placeholder="Descreva o problema, o que já foi tentado, se há risco, o que precisa ser feito..." />
+        <textarea id="lab-incidents-o-que-aconteceu-detalhes" rows={4} value={form.description} maxLength={5000} onChange={e => set('description', e.target.value)} placeholder="Descreva o problema, o que já foi tentado, se há risco, o que precisa ser feito…" />
       </div>
       <div className={s.formGrid}>
         <div className="form-group">
@@ -191,7 +191,7 @@ function IncidentForm({ incident, building, knownLabs, onClose, onSaved }) {
         </div>
         <div className="form-group">
           <label htmlFor="lab-incidents-quem-relatou" className="label">Quem relatou</label>
-          <input id="lab-incidents-quem-relatou" value={form.reported_by_name} maxLength={120} onChange={e => set('reported_by_name', e.target.value)} placeholder="Professor, aluno, monitor..." />
+          <input id="lab-incidents-quem-relatou" value={form.reported_by_name} maxLength={120} onChange={e => set('reported_by_name', e.target.value)} placeholder="Professor, aluno, monitor…" />
         </div>
         <div className="form-group">
           <label htmlFor="lab-incidents-turma-aula-professor-no-" className="label">Turma / aula / professor no horário</label>
@@ -238,7 +238,7 @@ function IncidentDetail({ id, user, writable, onClose, onChanged, onEdit, onDele
   useEffect(() => { load() }, [id])
   useLiveRefresh(['lab-incidents'], () => load())
 
-  if (inc === null) return <Modal title="Incidente" onClose={onClose} width={720}><p className={s.muted}>Carregando...</p></Modal>
+  if (inc === null) return <Modal title="Incidente" onClose={onClose} width={720}><p className={s.muted}>Carregando…</p></Modal>
   if (inc === false) return <Modal title="Incidente" onClose={onClose} width={720}><p className={s.muted}>Incidente não encontrado.</p></Modal>
 
   const canEditData = writable && (inc.created_by === user?.id || user?.system_role === 'super_admin')
@@ -295,7 +295,7 @@ function IncidentDetail({ id, user, writable, onClose, onChanged, onEdit, onDele
         {(inc.photos || []).map(p => (
           <div key={p.id} className={s.thumbWrap}>
             <button type="button" className={s.thumbBtn} onClick={() => setViewing(p)} title="Ver em tamanho grande" aria-label="Ver em tamanho grande">
-              <img src={p.thumb} alt="" className={s.thumb} />
+              <img src={p.thumb} alt="" className={s.thumb} width={92} height={92} />
             </button>
             {canEditData && <button type="button" className={s.thumbRemove} title="Remover foto" aria-label="Remover esta foto" onClick={() => removePhoto(p)}>×</button>}
           </div>
@@ -406,7 +406,7 @@ export default function LabIncidentsPage() {
     return list.some(i => i.id === inc.id) ? list.map(i => (i.id === inc.id ? { ...i, ...inc } : i)) : [inc, ...list]
   })
 
-  if (!items) return <div className={s.loading}>Carregando incidentes...</div>
+  if (!items) return <div className={s.loading}>Carregando incidentes…</div>
 
   const tabs = [
     ['abertos', 'Pendentes', stats.openAll],
@@ -475,7 +475,7 @@ export default function LabIncidentsPage() {
               <li key={i.id}>
                 <button type="button" className={`${s.row} ${i.status === 'resolvido' ? s.rowDone : ''}`} onClick={() => setOpenId(i.id)}>
                   {i.cover
-                    ? <img src={i.cover} alt="" className={s.rowPhoto} />
+                    ? <img src={i.cover} alt="" className={s.rowPhoto} width={56} height={42} decoding="async" />
                     : <span className={s.rowIcon} aria-hidden="true"><LineIcon name={cat.icon} size={20} /></span>}
                   <span className={s.rowMain}>
                     <span className={s.rowTitle}>{i.title}</span>

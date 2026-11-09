@@ -123,7 +123,7 @@ function Editor({ printer, defaultLocation, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="printers-departamento" className="label">Setor onde fica</label>
-        <input id="printers-departamento" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="Ex: Financeiro, TI, Secretaria..." />
+        <input id="printers-departamento" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="Ex: Financeiro, TI, Secretaria…" />
       </div>
       <div className="form-group">
         <label htmlFor="printers-driver" className="label">Driver (opcional, até 95 MB)</label>
@@ -152,7 +152,7 @@ function Editor({ printer, defaultLocation, onClose, onSaved }) {
       </div>
       <DepartmentSelect value={form.department_id} onChange={v => setForm(f => ({ ...f, department_id: v }))} label="Visível para" />
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.model.trim() || saving || uploadingFile} onClick={save}>
-        {uploadingFile ? 'Enviando driver...' : saving ? 'Salvando...' : printer ? 'Salvar alterações' : 'Cadastrar impressora'}
+        {uploadingFile ? 'Enviando driver…' : saving ? 'Salvando…' : printer ? 'Salvar alterações' : 'Cadastrar impressora'}
       </button>
     </Modal>
   )
@@ -246,7 +246,7 @@ export default function PrintersPage() {
     }
   }
 
-  if (loading) return <div className={s.loading}>Carregando impressoras...</div>
+  if (loading) return <div className={s.loading}>Carregando impressoras…</div>
 
   const withIp = filtered.filter(p => p.ip).length
   const withDriver = filtered.filter(p => p.has_attachment || p.link_url).length

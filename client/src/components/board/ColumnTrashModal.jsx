@@ -61,7 +61,7 @@ export default function ColumnTrashModal({ boardId, onClose, onChanged }) {
   return (
     <Modal title="Lixeira de colunas" onClose={onClose} width={480}>
       {columns === null ? (
-        <p className={s.empty}>Carregando...</p>
+        <p className={s.empty}>Carregando…</p>
       ) : columns.length === 0 ? (
         <p className={s.empty}>Nenhuma coluna excluída no momento.</p>
       ) : (

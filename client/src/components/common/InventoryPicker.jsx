@@ -40,12 +40,12 @@ export default function InventoryPicker({ building, onPick, onClose, excludeIds 
       <input
         className={s.input}
         autoFocus
-        placeholder="Buscar por modelo ou patrimônio..."
+        placeholder="Buscar por modelo ou patrimônio…"
         value={query}
         onChange={e => setQuery(e.target.value)}
       />
       <div className={s.list}>
-        {loading && <div className={s.empty}>Carregando...</div>}
+        {loading && <div className={s.empty}>Carregando…</div>}
         {!loading && results.length === 0 && (
           <div className={s.empty}>{items.length === 0 ? 'Nenhum item cadastrado nesse prédio ainda.' : 'Nenhum item bate com a busca.'}</div>
         )}

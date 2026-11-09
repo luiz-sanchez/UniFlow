@@ -41,12 +41,12 @@ export default function MemberPicker({ existingIds = [], onPick, onClose, align 
       <input
         className={s.input}
         autoFocus
-        placeholder="Buscar por nome ou e-mail..."
+        placeholder="Buscar por nome ou e-mail…"
         value={query}
         onChange={e => setQuery(e.target.value)}
       />
       <div className={s.list}>
-        {loading && <div className={s.empty}>Buscando...</div>}
+        {loading && <div className={s.empty}>Buscando…</div>}
         {!loading && results.length === 0 && (
           <div className={s.empty}>{query.trim() ? 'Nenhum usuário encontrado.' : 'Ninguém disponível pra adicionar.'}</div>
         )}

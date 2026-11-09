@@ -4,7 +4,7 @@ import LineIcon from './LineIcon'
 
 // Botão "Exportar Excel" das telas com exportação (ver utils/exports.js).
 // `onExport` busca os dados e baixa o .xlsx — pode levar uns segundos na 1ª vez
-// (carrega a biblioteca da planilha), por isso o "Gerando...".
+// (carrega a biblioteca da planilha), por isso o "Gerando…".
 export default function ExportXlsxButton({ onExport, label = 'Exportar Excel', className = 'btn btn-ghost' }) {
   const [busy, setBusy] = useState(false)
   const run = async () => {
@@ -19,7 +19,7 @@ export default function ExportXlsxButton({ onExport, label = 'Exportar Excel', c
   }
   return (
     <button className={className} onClick={run} disabled={busy} title="Baixar planilha do Excel (.xlsx)">
-      {busy ? 'Gerando planilha...' : <><LineIcon name="sheet" /> {label}</>}
+      {busy ? 'Gerando planilha…' : <><LineIcon name="sheet" /> {label}</>}
     </button>
   )
 }

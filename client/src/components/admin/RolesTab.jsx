@@ -147,7 +147,7 @@ export default function RolesTab({ roles, modules, setRoles, defaultRoleId, setD
           <div className={s.fields}>
             <div className={s.field}>
               <label htmlFor="role-name">Nome do cargo</label>
-              <input id="role-name" value={draft.name} disabled={locked} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} placeholder="Ex: Recepção, Coordenador..." />
+              <input id="role-name" value={draft.name} disabled={locked} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} placeholder="Ex: Recepção, Coordenador…" />
             </div>
             <div className={s.field}>
               <label htmlFor="role-scope">O que enxerga</label>
@@ -193,7 +193,7 @@ export default function RolesTab({ roles, modules, setRoles, defaultRoleId, setD
           {!locked && (
             <div className={s.actions}>
               <button className="btn btn-primary" onClick={save} disabled={!dirty || saving}>
-                {saving ? 'Salvando...' : isNew ? 'Criar cargo' : 'Salvar alterações'}
+                {saving ? 'Salvando…' : isNew ? 'Criar cargo' : 'Salvar alterações'}
               </button>
               {!isNew && selected && selected.id !== 'role-colaborador' && (
                 <button className={`btn btn-ghost ${s.danger}`} onClick={remove}><LineIcon name="trash" size={14} /> Apagar cargo</button>

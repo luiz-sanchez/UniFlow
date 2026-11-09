@@ -57,7 +57,7 @@ function Editor({ entry, existingCategories, onClose, onSaved }) {
     <Modal title={entry ? 'Editar item' : 'Novo item do cofre'} onClose={onClose} width={480}>
       <div className="form-group">
         <label htmlFor="vault-titulo" className="label">Título</label>
-        <input id="vault-titulo" autoFocus value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Wi-Fi SEDE, Painel admin GLPI..." />
+        <input id="vault-titulo" autoFocus value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Wi-Fi SEDE, Painel admin GLPI…" />
       </div>
       <div className="form-group">
         <label htmlFor="vault-categoria" className="label">Categoria</label>
@@ -93,7 +93,7 @@ function Editor({ entry, existingCategories, onClose, onSaved }) {
         disabled={!form.title.trim() || (!entry && !form.password) || saving}
         onClick={save}
       >
-        {saving ? 'Salvando...' : entry ? 'Salvar alterações' : 'Guardar no cofre'}
+        {saving ? 'Salvando…' : entry ? 'Salvar alterações' : 'Guardar no cofre'}
       </button>
     </Modal>
   )
@@ -140,7 +140,7 @@ function AccessModal({ onClose }) {
         Super Admin sempre tem acesso. As pessoas abaixo foram autorizadas além disso; cada senha que elas veem fica no histórico.
       </p>
       {list === null ? (
-        <p className={s.hint}>Carregando...</p>
+        <p className={s.hint}>Carregando…</p>
       ) : (
         <div className={s.accessList}>
           {list.map(row => (
@@ -268,7 +268,7 @@ export default function VaultPage() {
     }
   }
 
-  if (loading) return <div className={s.loading}>Carregando cofre...</div>
+  if (loading) return <div className={s.loading}>Carregando cofre…</div>
 
   if (denied) {
     return (

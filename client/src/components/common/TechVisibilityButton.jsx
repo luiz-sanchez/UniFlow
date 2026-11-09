@@ -54,7 +54,7 @@ function TechVisibilityModal({ entity, technicians, hidden, onClose, onSaved }) 
         Desmarque quem não deve aparecer nos gráficos <strong>por técnico</strong> do Total de Chamados e do Backlog
         ({entity}). Os chamados continuam contando nos totais. Vale para todos que veem esta entidade.
       </p>
-      {all.length > 8 && <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar técnico..." style={{ marginBottom: 8 }} />}
+      {all.length > 8 && <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar técnico…" style={{ marginBottom: 8 }} />}
       <div style={{ maxHeight: 340, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 10 }}>
         {shown.map(t => (
           <label key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px', borderRadius: 6, cursor: 'pointer', opacity: hiddenSet.has(t.name) ? 0.55 : 1 }}>
@@ -69,7 +69,7 @@ function TechVisibilityModal({ entity, technicians, hidden, onClose, onSaved }) 
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn btn-ghost" onClick={() => setHiddenSet(new Set())} disabled={!hiddenSet.size}>Mostrar todos</button>
         <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={save} disabled={saving}>
-          {saving ? 'Salvando...' : `Salvar${hiddenSet.size ? ` (${hiddenSet.size} oculto${hiddenSet.size > 1 ? 's' : ''})` : ''}`}
+          {saving ? 'Salvando…' : `Salvar${hiddenSet.size ? ` (${hiddenSet.size} oculto${hiddenSet.size > 1 ? 's' : ''})` : ''}`}
         </button>
       </div>
     </Modal>

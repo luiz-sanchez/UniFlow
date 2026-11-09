@@ -353,7 +353,7 @@ export default function BoardPage() {
     : 'Nenhum cartão aberto'
   const canArchive = board && (['owner', 'admin', 'dept_admin'].includes(board.my_role) || user?.system_role === 'super_admin')
 
-  if (loading) return <div className={s.loading}>Carregando quadro...</div>
+  if (loading) return <div className={s.loading}>Carregando quadro…</div>
   if (!board) return <div className={s.loading}>Quadro não encontrado.</div>
 
   return (

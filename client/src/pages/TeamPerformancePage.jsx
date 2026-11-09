@@ -64,7 +64,7 @@ function HistoryModal({ member, onClose, onEventRemoved, canRemove }) {
   return (
     <Modal title={`Histórico de ${member.user_name}`} onClose={onClose} width={520}>
       {events === null ? (
-        <p className={s.emptyHint}>Carregando...</p>
+        <p className={s.emptyHint}>Carregando…</p>
       ) : events.length === 0 ? (
         <p className={s.emptyHint}>Nenhum lançamento ainda.</p>
       ) : (
@@ -138,7 +138,7 @@ function GiveKudosModal({ member, type, onClose, onGiven }) {
         disabled={saving}
         onClick={submit}
       >
-        {saving ? 'Salvando...' : isLike ? 'Registrar reconhecimento' : 'Registrar ponto de melhoria'}
+        {saving ? 'Salvando…' : isLike ? 'Registrar reconhecimento' : 'Registrar ponto de melhoria'}
       </button>
     </Modal>
   )
@@ -217,7 +217,7 @@ export default function TeamPerformancePage() {
     api.get('/team-kudos/recent').then(r => setRecent(r.data || [])).catch(() => {})
   }
 
-  if (loading) return <div className={s.loading}>Carregando desempenho...</div>
+  if (loading) return <div className={s.loading}>Carregando desempenho…</div>
 
   const list = members || []
   const totalStars = list.reduce((a, m) => a + (m.stars || 0), 0)

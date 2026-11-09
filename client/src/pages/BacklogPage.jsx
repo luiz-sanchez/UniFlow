@@ -170,7 +170,7 @@ export default function BacklogPage() {
     })
   }, [snapshot, techFilter, statusFilter, monthFilter, ageFilter, priorityFilter, categoryFilter])
 
-  if (loading) return <div className={s.loading}>Carregando backlog...</div>
+  if (loading) return <div className={s.loading}>Carregando backlog…</div>
 
   return (
     <div className={s.page}>
@@ -194,7 +194,7 @@ export default function BacklogPage() {
               disabled={refreshing}
               title="Atualiza Backlog, Total de Chamados e Eventos da Agenda juntos"
             >
-              {refreshing ? 'Atualizando...' : 'Atualizar agora'}
+              {refreshing ? 'Atualizando…' : 'Atualizar agora'}
             </button>
           )}
         </div>

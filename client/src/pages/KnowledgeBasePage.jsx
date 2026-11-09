@@ -157,7 +157,7 @@ function Editor({ article, onClose, onSaved, fixedCategory }) {
       </div>
       <DepartmentSelect value={form.department_id} onChange={v => setForm(f => ({ ...f, department_id: v }))} label="Visível para" />
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.title.trim() || saving || uploadingFile} onClick={save}>
-        {uploadingFile ? 'Enviando anexo...' : saving ? 'Salvando...' : article ? 'Salvar alterações' : 'Criar artigo'}
+        {uploadingFile ? 'Enviando anexo…' : saving ? 'Salvando…' : article ? 'Salvar alterações' : 'Criar artigo'}
       </button>
     </Modal>
   )

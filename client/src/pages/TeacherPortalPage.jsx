@@ -106,7 +106,7 @@ export default function TeacherPortalPage() {
           </button>
           <button type="button" className={`${s.action} ${open === 'ticket' ? s.actionOn : ''}`} aria-expanded={open === 'ticket'} onClick={() => toggleForm('ticket')}>
             <span className={s.actionIcon}><LineIcon name="wrench" size={22} /></span>
-            <span><strong>Abrir chamado</strong><small>Projetor, internet, computador...</small></span>
+            <span><strong>Abrir chamado</strong><small>Projetor, internet, computador…</small></span>
           </button>
         </div>
 

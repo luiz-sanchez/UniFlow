@@ -114,7 +114,7 @@ function Editor({ request, defaultMonth, onClose, onSaved }) {
         </div>
         <div className="form-group" style={{ flex: 1 }}>
           <label htmlFor="purchase-requests-departamento" className="label">Departamento</label>
-          <input id="purchase-requests-departamento" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="Ex: TI, RH, Cobrança..." />
+          <input id="purchase-requests-departamento" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} placeholder="Ex: TI, RH, Cobrança…" />
         </div>
       </div>
       <div className="form-group">
@@ -123,7 +123,7 @@ function Editor({ request, defaultMonth, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="purchase-requests-unidade-sede" className="label">Unidade / Sede</label>
-        <input id="purchase-requests-unidade-sede" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Ex: SEDE/CENTRO, ADM..." />
+        <input id="purchase-requests-unidade-sede" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Ex: SEDE/CENTRO, ADM…" />
       </div>
       <div style={{ display: 'flex', gap: 12 }}>
         <div className="form-group" style={{ flex: 1 }}>
@@ -145,7 +145,7 @@ function Editor({ request, defaultMonth, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="purchase-requests-observacao" className="label">Observação</label>
-        <textarea id="purchase-requests-observacao" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Motivo, contexto, urgência..." />
+        <textarea id="purchase-requests-observacao" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Motivo, contexto, urgência…" />
       </div>
 
       {!request && (
@@ -181,7 +181,7 @@ function Editor({ request, defaultMonth, onClose, onSaved }) {
         disabled={!form.item_name.trim() || (!request && approvers.length === 0) || saving}
         onClick={save}
       >
-        {saving ? 'Salvando...' : request ? 'Salvar' : 'Enviar solicitação'}
+        {saving ? 'Salvando…' : request ? 'Salvar' : 'Enviar solicitação'}
       </button>
     </Modal>
   )
@@ -321,12 +321,12 @@ function StatusChangeModal({ request, targetStatus, onClose, onChanged }) {
         <label htmlFor="purchase-requests-comentario-opcional" className="label">Comentário (opcional)</label>
         <textarea id="purchase-requests-comentario-opcional"
           autoFocus rows={3} value={comment} onChange={e => setComment(e.target.value)}
-          placeholder="Ex: Gestor pediu pra revisar o orçamento antes..."
+          placeholder="Ex: Gestor pediu pra revisar o orçamento antes…"
         />
       </div>
       {error && <p role="alert" className={s.fileError}>{error}</p>}
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={saving} onClick={confirm}>
-        {saving ? 'Salvando...' : `Confirmar → ${label}`}
+        {saving ? 'Salvando…' : `Confirmar → ${label}`}
       </button>
     </Modal>
   )
@@ -409,7 +409,7 @@ export default function PurchaseRequestsPage() {
 
   const openApprovers = (requests || []).find(r => r.id === approversFor)
 
-  if (loading) return <div className={s.loading}>Carregando solicitações...</div>
+  if (loading) return <div className={s.loading}>Carregando solicitações…</div>
 
   return (
     <div className={s.page}>
@@ -456,7 +456,7 @@ export default function PurchaseRequestsPage() {
           <div className={s.tableFilters}>
             <input
               className={s.searchInput}
-              placeholder="Buscar por item, departamento, chamado..."
+              placeholder="Buscar por item, departamento, chamado…"
               aria-label="Buscar solicitações"
               value={search}
               onChange={e => setSearch(e.target.value)}

@@ -66,7 +66,7 @@ function ItemModal({ kind, meta, item, sectors, onClose, onSaved }) {
         </div>
         {error && <p role="alert" className={s.error}>{error}</p>}
         <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!f.holder_name.trim() || saving}>
-          {saving ? 'Salvando...' : item ? 'Salvar alterações' : `Cadastrar ${meta.item}`}
+          {saving ? 'Salvando…' : item ? 'Salvar alterações' : `Cadastrar ${meta.item}`}
         </button>
       </form>
     </Modal>

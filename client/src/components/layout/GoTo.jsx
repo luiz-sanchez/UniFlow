@@ -38,7 +38,20 @@ const PAGES = [
   ['VLANs', '/gestao/vlans', 'vault', 'wi-fi rede senhas'],
   ['Administração', '/admin', 'admin', 'usuários cargos departamentos logs'],
 ]
-const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+// Título da aba do navegador ("Escala · UniFlow"): a tela cujo caminho mais
+// longo casa com o endereço atual (assim /estoque-insumos/SEDE vale o estoque).
+export function pageTitle(pathname) {
+  let best = null
+  for (const [label, to] of PAGES) {
+    const hit = to === '/' ? pathname === '/' : (pathname === to || pathname.startsWith(to + '/'))
+    if (hit && (!best || to.length > best[1].length)) best = [label, to]
+  }
+  if (!best && pathname.startsWith('/boards')) best = ['Quadros']
+  if (!best && pathname.startsWith('/perfil')) best = ['Perfil']
+  return best ? `${best[0]} · UniFlow` : 'UniFlow'
+}
+
+const norm = v =>String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 export default function GoTo() {
   const { user } = useAuthStore()

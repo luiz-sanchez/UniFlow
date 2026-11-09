@@ -130,7 +130,7 @@ function Editor({ dev, onClose, onSaved }) {
       <DepartmentSelect value={form.department_id} onChange={v => set('department_id', v)} label="Visível para" />
       {error && <p role="alert" className={s.error}>{error}</p>}
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.name.trim() || saving} onClick={save}>
-        {saving ? 'Salvando...' : 'Salvar'}
+        {saving ? 'Salvando…' : 'Salvar'}
       </button>
     </Modal>
   )
@@ -177,7 +177,7 @@ export default function DevelopmentsPage() {
     }
   }
 
-  if (!devs) return <div className={s.loading}>Carregando desenvolvimentos...</div>
+  if (!devs) return <div className={s.loading}>Carregando desenvolvimentos…</div>
 
   return (
     <div className={s.page}>
@@ -191,7 +191,7 @@ export default function DevelopmentsPage() {
 
       {devs.length > 3 && (
         <div className={s.toolbar}>
-          <input className={s.search} value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome ou descrição..." />
+          <input className={s.search} value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome ou descrição…" />
         </div>
       )}
 

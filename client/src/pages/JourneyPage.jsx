@@ -53,7 +53,7 @@ function MilestoneModal({ userId, milestone, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="journey-titulo" className="label">Título</label>
-        <input id="journey-titulo" autoFocus value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Entrou na empresa, Promovido a Analista..." />
+        <input id="journey-titulo" autoFocus value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Entrou na empresa, Promovido a Analista…" />
       </div>
       <div className="form-group">
         <label htmlFor="journey-detalhes-opcional" className="label">Detalhes (opcional)</label>
@@ -61,7 +61,7 @@ function MilestoneModal({ userId, milestone, onClose, onSaved }) {
       </div>
       {error && <p role="alert" className={s.error}>{error}</p>}
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.title.trim() || !form.event_date || saving} onClick={save}>
-        {saving ? 'Salvando...' : milestone ? 'Salvar alterações' : 'Adicionar marco'}
+        {saving ? 'Salvando…' : milestone ? 'Salvar alterações' : 'Adicionar marco'}
       </button>
     </Modal>
   )
@@ -146,7 +146,7 @@ function Detail({ person, canEdit, onRemove, onCountChanged }) {
         <div className={s.personText}>
           <h2 id="journey-person" className={s.personName}>{person.user_name}</h2>
           <p className={s.personSummary}>
-            {!data ? 'Carregando...'
+            {!data ? 'Carregando…'
               : first ? `${data.events.length} ${data.events.length === 1 ? 'marco' : 'marcos'} desde ${monthLong(first.event_date)}.`
               : 'Nenhum marco registrado ainda.'}
           </p>
@@ -158,7 +158,7 @@ function Detail({ person, canEdit, onRemove, onCountChanged }) {
         )}
       </header>
 
-      {!data ? <div className={s.detailLoading}>Carregando jornada...</div> : (
+      {!data ? <div className={s.detailLoading}>Carregando jornada…</div> : (
         <div className={s.columns}>
           <div className={s.col}>
             <div className={s.sectionHead}>
@@ -206,9 +206,9 @@ function Detail({ person, canEdit, onRemove, onCountChanged }) {
             {editingStory ? (
               <div className={s.storyEdit}>
                 <label htmlFor="journey-story" className="sr-only">História de {person.user_name}</label>
-                <textarea id="journey-story" rows={10} autoFocus value={storyDraft} onChange={e => setStoryDraft(e.target.value)} placeholder={`Conte a história de ${firstName} na equipe...`} />
+                <textarea id="journey-story" rows={10} autoFocus value={storyDraft} onChange={e => setStoryDraft(e.target.value)} placeholder={`Conte a história de ${firstName} na equipe…`} />
                 <div className={s.storyBtns}>
-                  <button className="btn btn-primary btn-sm" disabled={savingStory} onClick={saveStory}>{savingStory ? 'Salvando...' : 'Salvar história'}</button>
+                  <button className="btn btn-primary btn-sm" disabled={savingStory} onClick={saveStory}>{savingStory ? 'Salvando…' : 'Salvar história'}</button>
                   <button className="btn btn-ghost btn-sm" disabled={savingStory} onClick={() => setEditingStory(false)}>Cancelar</button>
                 </div>
               </div>
@@ -294,7 +294,7 @@ export default function JourneyPage() {
     }
   }
 
-  if (!people) return <div className={s.loading}>Carregando...</div>
+  if (!people) return <div className={s.loading}>Carregando…</div>
 
   const selected = people.find(p => p.user_id === selectedId)
 

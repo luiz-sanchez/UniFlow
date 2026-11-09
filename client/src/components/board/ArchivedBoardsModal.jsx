@@ -29,7 +29,7 @@ export default function ArchivedBoardsModal({ onClose, onRestored }) {
   return (
     <Modal title="Quadros arquivados" onClose={onClose} width={420}>
       {boards === null ? (
-        <p className={s.empty}>Carregando...</p>
+        <p className={s.empty}>Carregando…</p>
       ) : boards.length === 0 ? (
         <p className={s.empty}>Nenhum quadro arquivado.</p>
       ) : (

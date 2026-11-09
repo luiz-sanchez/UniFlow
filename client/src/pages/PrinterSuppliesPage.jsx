@@ -12,7 +12,7 @@ import LineIcon from '../components/common/LineIcon'
 import RowMenu from '../components/common/RowMenu'
 import s from './PrinterSuppliesPage.module.css'
 
-// Impressoras → Estoque de insumos: saldo POR PRÉDIO de toner, cilindro, tinta...
+// Impressoras → Estoque de insumos: saldo POR PRÉDIO de toner, cilindro, tinta…
 // Cada troca fica ligada à impressora (dá o consumo e a previsão de quando
 // acaba). Servidor: server/src/routes/printerSupplies.js.
 
@@ -106,7 +106,7 @@ function SupplyEditor({ supply, knownModels, onClose, onSaved }) {
           ))}
         </div>
         <div className={s.inlineRow}>
-          <input value={newModel} onChange={e => setNewModel(e.target.value)} placeholder="Outro modelo..." onKeyDown={e => { if (e.key === 'Enter' && newModel.trim()) { set('models', [...form.models, newModel.trim()]); setNewModel('') } }} />
+          <input value={newModel} onChange={e => setNewModel(e.target.value)} placeholder="Outro modelo…" onKeyDown={e => { if (e.key === 'Enter' && newModel.trim()) { set('models', [...form.models, newModel.trim()]); setNewModel('') } }} />
           <button type="button" className="btn btn-ghost btn-sm" disabled={!newModel.trim()} onClick={() => { set('models', [...form.models, newModel.trim()]); setNewModel('') }}>+ Adicionar</button>
         </div>
       </div>
@@ -123,10 +123,10 @@ function SupplyEditor({ supply, knownModels, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="printer-supplies-observacoes" className="label">Observações</label>
-        <textarea id="printer-supplies-observacoes" rows={2} value={form.notes} maxLength={1000} onChange={e => set('notes', e.target.value)} placeholder="Fornecedor, rendimento (páginas), onde fica guardado..." />
+        <textarea id="printer-supplies-observacoes" rows={2} value={form.notes} maxLength={1000} onChange={e => set('notes', e.target.value)} placeholder="Fornecedor, rendimento (páginas), onde fica guardado…" />
       </div>
       {error && <p role="alert" className={s.error}>{error}</p>}
-      <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.name.trim() || saving} onClick={save}>{saving ? 'Salvando...' : 'Salvar'}</button>
+      <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.name.trim() || saving} onClick={save}>{saving ? 'Salvando…' : 'Salvar'}</button>
     </Modal>
   )
 }
@@ -170,7 +170,7 @@ function MovementModal({ supply, location, kind, printers, onClose, onSaved }) {
         <div className="form-group">
           <label htmlFor="printer-supplies-em-qual-impressora" className="label">Em qual impressora? *</label>
           <select id="printer-supplies-em-qual-impressora" value={form.printer_id} onChange={e => set('printer_id', e.target.value)}>
-            <option value="">Escolha a impressora...</option>
+            <option value="">Escolha a impressora…</option>
             {compatible.length > 0 && <optgroup label="Compatíveis com este insumo">{compatible.map(p => <option key={p.id} value={p.id}>{printerLabel(p)}</option>)}</optgroup>}
             {others.length > 0 && <optgroup label={compatible.length ? 'Outras deste prédio' : 'Impressoras deste prédio'}>{others.map(p => <option key={p.id} value={p.id}>{printerLabel(p)}</option>)}</optgroup>}
           </select>
@@ -201,7 +201,7 @@ function MovementModal({ supply, location, kind, printers, onClose, onSaved }) {
         <input id="printer-supplies-observacao" value={form.note} maxLength={500} onChange={e => set('note', e.target.value)} placeholder={kind === 'entrada' ? 'Ex: NF 1234, fornecedor X' : kind === 'troca' ? 'Ex: contador 45.210 páginas, chamado #123' : 'Opcional'} />
       </div>
       {error && <p role="alert" className={s.error}>{error}</p>}
-      <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!valid || saving} onClick={save}>{saving ? 'Registrando...' : 'Registrar'}</button>
+      <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!valid || saving} onClick={save}>{saving ? 'Registrando…' : 'Registrar'}</button>
     </Modal>
   )
 }
@@ -212,7 +212,7 @@ function HistoryModal({ supply, location, onClose }) {
   useEffect(() => { api.get(`/printer-supplies/${supply.id}/movements`, { params: { location } }).then(r => setRows(r.data || [])).catch(() => setRows([])) }, [supply.id, location])
   return (
     <Modal title={`Histórico — ${supply.name} (${LOC_LABEL[location]})`} onClose={onClose} width={720}>
-      {!rows ? <p className={s.hint}>Carregando...</p> : rows.length === 0 ? <p className={s.hint}>Nenhuma movimentação ainda neste prédio.</p> : (
+      {!rows ? <p className={s.hint}>Carregando…</p> : rows.length === 0 ? <p className={s.hint}>Nenhuma movimentação ainda neste prédio.</p> : (
         <div className={s.tableWrap}>
           <table className={s.table}>
             <thead><tr><th>Quando</th><th>Movimento</th><th>Qtd</th><th>Saldo</th><th>Impressora / detalhe</th><th>Quem</th></tr></thead>
@@ -236,7 +236,10 @@ function HistoryModal({ supply, location, onClose }) {
 }
 
 export default function PrinterSuppliesPage() {
-  const { location = 'sede' } = useParams()
+  // endereço digitado em maiúsculas (/SEDE) ou prédio que não existe: cai no
+  // prédio certo em vez de quebrar a tela
+  const { location: rawLoc = 'sede' } = useParams()
+  const location = LOC_LABEL[rawLoc.toLowerCase()] ? rawLoc.toLowerCase() : 'sede'
   const { user } = useAuthStore()
   const [supplies, setSupplies] = useState(null)
   const [printers, setPrinters] = useState([])
@@ -280,7 +283,7 @@ export default function PrinterSuppliesPage() {
     catch (e) { await alertDialog(e.response?.data?.error || 'Erro ao remover.', { title: 'Erro', danger: true }) }
   }
 
-  if (!supplies) return <div className={s.loading}>Carregando estoque...</div>
+  if (!supplies) return <div className={s.loading}>Carregando estoque…</div>
 
   return (
     <div className={s.page}>

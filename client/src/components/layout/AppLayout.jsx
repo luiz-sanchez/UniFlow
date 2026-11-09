@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import { pageTitle } from './GoTo'
 import ConfirmDialogHost from '../common/ConfirmDialogHost'
 import styles from './AppLayout.module.css'
 
@@ -24,6 +25,7 @@ export default function AppLayout() {
   const lastView = useRef({ path: null, at: 0 })
   useEffect(() => {
     const path = location.pathname
+    document.title = pageTitle(path)
     const now = Date.now()
     if (lastView.current.path === path && now - lastView.current.at < 30000) return
     lastView.current = { path, at: now }

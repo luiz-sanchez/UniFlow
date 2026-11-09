@@ -161,7 +161,7 @@ function RequestModal({ onClose, onCreated }) {
       </div>
       <div className="form-group">
         <label htmlFor="approvals-descricao-opcional" className="label">Descrição (opcional)</label>
-        <textarea id="approvals-descricao-opcional" rows={4} value={description} onChange={e => setDescription(e.target.value)} placeholder="Detalhes do que precisa ser aprovado..." />
+        <textarea id="approvals-descricao-opcional" rows={4} value={description} onChange={e => setDescription(e.target.value)} placeholder="Detalhes do que precisa ser aprovado…" />
       </div>
       <div className="form-group">
         <label htmlFor="approvals-prazo-opcional" className="label">Prazo (opcional)</label>
@@ -207,7 +207,7 @@ function RequestModal({ onClose, onCreated }) {
         disabled={!title.trim() || approvers.length === 0 || saving || uploading}
         onClick={submit}
       >
-        {uploading ? 'Enviando anexo...' : saving ? 'Enviando...' : 'Enviar pedido'}
+        {uploading ? 'Enviando anexo…' : saving ? 'Enviando…' : 'Enviar pedido'}
       </button>
     </Modal>
   )
@@ -399,7 +399,7 @@ export default function ApprovalsPage() {
 
   const openApproval = (approvals || []).find(a => a.id === openId)
 
-  if (loading && !approvals) return <div className={s.loading}>Carregando aprovações...</div>
+  if (loading && !approvals) return <div className={s.loading}>Carregando aprovações…</div>
 
   const list = approvals || []
   const waiting = scope === 'received' ? list.filter(a => a.my_decision === 'pending') : list.filter(a => a.status === 'pending')

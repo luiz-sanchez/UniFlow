@@ -228,7 +228,7 @@ function Editor({ loan, defaultBuilding, onClose, onSaved }) {
         <label htmlFor="equipment-loans-email-opcional" className="label">Email (opcional)</label>
         <input id="equipment-loans-email-opcional" type="email" value={form.requester_email} onChange={e => setForm(f => ({ ...f, requester_email: e.target.value }))} placeholder="nome@colegioser.com" />
         {emailInvalid && <p role="alert" className={s.fileError}>{LOAN_EMAIL_ERROR}</p>}
-        {emailLookup === 'loading' && <p className={s.roomHint}><LineIcon name="search" /> Buscando e-mail no diretório...</p>}
+        {emailLookup === 'loading' && <p className={s.roomHint}><LineIcon name="search" /> Buscando e-mail no diretório…</p>}
         {emailLookup === 'not_found' && <p className={s.roomHint}>Não achei esse nome no diretório — preenche manual.</p>}
         {!loan && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8, fontSize: 13, opacity: canSendEmail ? 1 : 0.5 }}>
@@ -377,7 +377,7 @@ function Editor({ loan, defaultBuilding, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="equipment-loans-observacao-opcional" className="label">Observação (opcional)</label>
-        <textarea id="equipment-loans-observacao-opcional" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Detalhes, condição do equipamento..." />
+        <textarea id="equipment-loans-observacao-opcional" rows={2} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Detalhes, condição do equipamento…" />
       </div>
       <DepartmentSelect value={form.department_id} onChange={v => setForm(f => ({ ...f, department_id: v }))} label="Visível para" />
 
@@ -387,7 +387,7 @@ function Editor({ loan, defaultBuilding, onClose, onSaved }) {
         disabled={!form.requester_name.trim() || !form.equipment_model.trim() || extras.some(x => !x.equipment_model.trim()) || emailInvalid || saving}
         onClick={save}
       >
-        {saving ? 'Salvando...' : loan ? 'Salvar' : extras.length ? `Registrar ${extras.length + 1} equipamentos` : 'Registrar empréstimo'}
+        {saving ? 'Salvando…' : loan ? 'Salvar' : extras.length ? `Registrar ${extras.length + 1} equipamentos` : 'Registrar empréstimo'}
       </button>
     </Modal>
   )
@@ -489,7 +489,7 @@ function MessageModal({ loan, onClose, onEmailSaved }) {
         ))}
       </div>
       <div className="form-group">
-        <textarea rows={3} value={message} onChange={e => setMessage(e.target.value)} placeholder="Escreva a mensagem ou escolha uma pronta acima..." autoFocus />
+        <textarea rows={3} value={message} onChange={e => setMessage(e.target.value)} placeholder="Escreva a mensagem ou escolha uma pronta acima…" autoFocus />
       </div>
 
       {error && <p role="alert" className={s.fileError}>{error}</p>}
@@ -498,7 +498,7 @@ function MessageModal({ loan, onClose, onEmailSaved }) {
         disabled={!message.trim() || !target || toInvalid || sending}
         onClick={send}
       >
-        {sending ? 'Enviando...' : <><LineIcon name="mail" /> Enviar por e-mail</>}
+        {sending ? 'Enviando…' : <><LineIcon name="mail" /> Enviar por e-mail</>}
       </button>
     </Modal>
   )
@@ -571,7 +571,7 @@ function InventoryModal({ building, onClose }) {
 
       <div className={s.section}>
         {items === null ? (
-          <p className={s.emptyHint}>Carregando...</p>
+          <p className={s.emptyHint}>Carregando…</p>
         ) : items.length === 0 ? (
           <p className={s.emptyHint}>Nenhum item cadastrado ainda.</p>
         ) : (
@@ -688,7 +688,7 @@ export default function EquipmentLoansPage() {
   const writable = canEditModule(user, 'loans') // cargo que só VÊ os empréstimos não registra/altera
   const canEdit = l => writable && (l.created_by === user?.id || user?.system_role === 'super_admin')
 
-  if (loading) return <div className={s.loading}>Carregando empréstimos...</div>
+  if (loading) return <div className={s.loading}>Carregando empréstimos…</div>
 
   return (
     <div className={s.page}>
@@ -704,7 +704,7 @@ export default function EquipmentLoansPage() {
           {writable && <button className="btn btn-primary" onClick={() => setEditing({})}><LineIcon name="plus" /> Novo empréstimo</button>}
           <RowMenu name="Empréstimos" items={[
             { label: 'Baixar Excel', icon: 'sheet', onClick: async () => { try { await exportLoansXlsx() } catch (e) { alertDialog(e.response?.data?.error || 'Não deu pra gerar a planilha.', { title: 'Erro ao exportar', danger: true }) } } },
-            user?.system_role === 'super_admin' && { label: syncingRooms ? 'Atualizando grade...' : 'Atualizar grade de salas', hint: 'Copia os horários do site de salas', icon: 'refresh', disabled: syncingRooms, onClick: syncRoomSchedule },
+            user?.system_role === 'super_admin' && { label: syncingRooms ? 'Atualizando grade…' : 'Atualizar grade de salas', hint: 'Copia os horários do site de salas', icon: 'refresh', disabled: syncingRooms, onClick: syncRoomSchedule },
           ]} />
         </div>
       </div>
@@ -743,7 +743,7 @@ export default function EquipmentLoansPage() {
           <div className={s.tableFilters}>
             <input
               className={s.searchInput}
-              placeholder="Buscar por nome, equipamento, patrimônio, sala..."
+              placeholder="Buscar por nome, equipamento, patrimônio, sala…"
               aria-label="Buscar empréstimos"
               value={search}
               onChange={e => setSearch(e.target.value)}

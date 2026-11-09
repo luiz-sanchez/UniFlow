@@ -86,7 +86,7 @@ export default function VlansPage() {
 
   if (!info) return <div role="alert" className={s.errorBox}>Local não encontrado.</div>
   if (error) return <div role="alert" className={s.errorBox}>{error}</div>
-  if (!data) return <div className={s.loading}>Carregando VLANs...</div>
+  if (!data) return <div className={s.loading}>Carregando VLANs…</div>
 
   return (
     <div className={s.page}>
