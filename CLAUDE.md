@@ -263,6 +263,9 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   manhã/noite NÃO é gravado, só vai no e-mail). Total de Chamados: `flowByMonth` (criados × resolvidos; resolvido ≈ `date_mod`). Logs abrem
   com `hide_pages=1` (sem "Tela aberta"). Gestão → Documentos = `KnowledgeBasePage mode="gestao"`. Rótulo `.label` sem caixa alta (app todo).
   Cor verde/azul nas Empresas = cor institucional (SER/UniFECAF), de propósito. `npm run release` espera até ~40 s a produção trocar.
+  **Menu lateral + barra de cima** (09/11/2026): conta no avatar (nome, tema, Sair — saíram do rodapé do menu); "Ir para"
+  (`components/layout/GoTo.jsx`, Ctrl K ou "/", telas pela permissão + quadros) no lugar da busca que não buscava; menu só
+  mostra número do que pede ação (aprovações, compras, incidentes, insumos no mínimo — nº de impressoras/filiais saiu).
   **Desempenho** (nov/2026): telas em `React.lazy` via `utils/lazyPage.js` (recarrega 1× se a aba antiga pedir arquivo que sumiu);
   Login/Início no pacote inicial. App inicial 1,9 MB → 350 KB. `manualChunks` dá pedaço próprio aos `commonjsHelpers` — senão caem no
   pdf-lib e TODA página pré-carrega o PDF (conferir `index.html` do build: não pode ter modulepreload de pdf-lib/exceljs/three).
