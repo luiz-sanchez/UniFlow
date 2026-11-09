@@ -121,6 +121,9 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   Fora da separação (de propósito): quadros/cartões (dono+membros), aprovações (participantes), Cofre/VLANs (lista própria `vault_access`).
   Compras: participante (quem pediu/aprovador) sempre enxerga. Time (Desempenho/Jornada): departamento vem da pessoa.
 - Quem tem escopo `all` usa **"Ver como departamento"** (Topbar → header `X-Department-View`): só estreita listas, nunca amplia acesso.
+- **Busca por entidade** (09/11/2026): Backlog e Total baixam só as entidades configuradas nos departamentos (`changeActiveEntities`
+  recursivo, uma sessão por busca); se falhar, voltam à busca completa (log "[glpi] busca por entidade falhou"). Teto: search 40 págs,
+  Ticket_User 30 págs, aviso no log acima de 80%.
 - **Chamados por entidade do GLPI**: `departments.glpi_entity_name` (TI = "SERVICE DESK"); resumos por entidade em `glpi_backlog_snapshot`/
   `glpi_total_*` com id `entity:<nome>`; `lib/glpiEntities.js`. Departamento sem entidade não vê chamados.
   Dashboard do Backlog por entidade: os status 10/13–17 (Compras, Manutenção, RH, Desligamento, Inventário, Eventos) são **filas do TI** —
