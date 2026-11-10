@@ -131,6 +131,89 @@ function SupplyEditor({ supply, knownModels, onClose, onSaved }) {
   )
 }
 
+// ── Detalhes da entrada (fornecedor, nota fiscal, valor) ───────────────────
+const brl = v => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const parseMoney = v => {
+  const t = String(v ?? '').replace(/\s|R\$/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')
+  return t === '' ? null : Number(t)
+}
+// "Fornecedor X · NF 1234 · R$ 60,00 cada (R$ 300,00)" — o que a entrada diz
+export function entryDetail(m) {
+  const parts = []
+  if (m.supplier) parts.push(m.supplier)
+  if (m.invoice) parts.push(`NF ${m.invoice}`)
+  if (m.unit_cost != null) parts.push(`${brl(m.unit_cost)} cada${m.delta > 1 ? ` (${brl(m.unit_cost * m.delta)})` : ''}`)
+  return parts.join(' · ')
+}
+
+let suppliersCache = null
+function useSuppliers() {
+  const [list, setList] = useState(suppliersCache || [])
+  useEffect(() => {
+    if (suppliersCache) return
+    api.get('/printer-supplies/suppliers').then(r => { suppliersCache = r.data || []; setList(suppliersCache) }).catch(() => {})
+  }, [])
+  return list
+}
+
+function EntryFields({ form, set, qty }) {
+  const suppliers = useSuppliers()
+  const unit = parseMoney(form.unit_cost)
+  const badUnit = unit != null && !(Number.isFinite(unit) && unit >= 0)
+  return (
+    <>
+      <div className={s.formGrid2}>
+        <div className="form-group">
+          <label htmlFor="supply-entry-supplier" className="label">Fornecedor</label>
+          <input id="supply-entry-supplier" list="supply-entry-suppliers" value={form.supplier} maxLength={120} onChange={e => set('supplier', e.target.value)} placeholder="De quem veio" autoComplete="off" />
+          <datalist id="supply-entry-suppliers">{suppliers.map(n => <option key={n} value={n} />)}</datalist>
+        </div>
+        <div className="form-group">
+          <label htmlFor="supply-entry-invoice" className="label">Nota fiscal ou pedido</label>
+          <input id="supply-entry-invoice" value={form.invoice} maxLength={60} onChange={e => set('invoice', e.target.value)} placeholder="Ex: 001234" />
+        </div>
+      </div>
+      <div className="form-group">
+        <label htmlFor="supply-entry-unit" className="label">Valor por unidade (R$)</label>
+        <input id="supply-entry-unit" inputMode="decimal" value={form.unit_cost} onChange={e => set('unit_cost', e.target.value)} placeholder="Ex: 189,90" aria-describedby="supply-entry-total" />
+        <p id="supply-entry-total" className={badUnit ? s.error : s.hint} role={badUnit ? 'alert' : undefined}>
+          {badUnit ? 'Digite só o valor, ex: 189,90.' : unit != null && qty > 0 ? `Total da entrada: ${brl(unit * qty)} (${qty} × ${brl(unit)})` : 'Opcional. Com o valor, o histórico mostra quanto custou a entrada.'}
+        </p>
+      </div>
+    </>
+  )
+}
+const entryValid = form => { const u = parseMoney(form.unit_cost); return u == null || (Number.isFinite(u) && u >= 0) }
+
+// Completar uma entrada (ou a observação de outro movimento) já registrada
+function MovementDetailsModal({ movement, onClose, onSaved }) {
+  const isEntry = movement.kind === 'entrada'
+  const [form, setForm] = useState({
+    supplier: movement.supplier || '', invoice: movement.invoice || '',
+    unit_cost: movement.unit_cost != null ? String(movement.unit_cost).replace('.', ',') : '', note: movement.note || '',
+  })
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const save = async () => {
+    setSaving(true); setError('')
+    try { onSaved((await api.patch(`/printer-supplies/movements/${movement.id}`, form)).data) }
+    catch (e) { setError(e.response?.data?.error || 'Erro ao salvar.'); setSaving(false) }
+  }
+  return (
+    <Modal title={isEntry ? 'Detalhes da entrada' : 'Observação do movimento'} onClose={onClose} width={520}>
+      <p className={s.moveHead}>{KIND_LABEL[movement.kind]} de <strong>{Math.abs(movement.delta)}</strong> em {fmtWhen(movement.happened_at)}. A quantidade não muda aqui; se ela estiver errada, registre um ajuste.</p>
+      {isEntry && <EntryFields form={form} set={set} qty={movement.delta} />}
+      <div className="form-group">
+        <label htmlFor="supply-mov-note" className="label">Observação</label>
+        <input id="supply-mov-note" value={form.note} maxLength={500} onChange={e => set('note', e.target.value)} placeholder="Opcional" />
+      </div>
+      {error && <p role="alert" className={s.error}>{error}</p>}
+      <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={saving || !entryValid(form)} onClick={save}>{saving ? 'Salvando…' : 'Salvar detalhes'}</button>
+    </Modal>
+  )
+}
+
 // ── Movimento (entrada, troca, transferência, ajuste) ──────────────────────
 const MOVE_TITLES = { entrada: 'Entrada no estoque', troca: 'Troca na impressora', transferencia: 'Transferir para outro prédio', ajuste: 'Ajustar saldo (contagem)' }
 
@@ -145,19 +228,20 @@ function MovementModal({ supply, location, kind, printers, onClose, onSaved }) {
     quantity: kind === 'ajuste' ? current : 1,
     printer_id: compatible.length === 1 ? compatible[0].id : '',
     to_location: SUPPLY_LOCATIONS.find(l => l.key !== location)?.key,
-    happened_at: nowLocal(), note: '',
+    happened_at: nowLocal(), note: '', supplier: '', invoice: '', unit_cost: '',
   })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const qty = Number(form.quantity)
   const tooMuch = (kind === 'troca' || kind === 'transferencia') && qty > current
-  const valid = Number.isInteger(qty) && qty >= (kind === 'ajuste' ? 0 : 1) && !tooMuch && (kind !== 'troca' || form.printer_id)
+  const valid = Number.isInteger(qty) && qty >= (kind === 'ajuste' ? 0 : 1) && !tooMuch && (kind !== 'troca' || form.printer_id) && (kind !== 'entrada' || entryValid(form))
 
   const save = async () => {
     setSaving(true); setError('')
     try {
       const { data } = await api.post(`/printer-supplies/${supply.id}/movements`, { kind, location, ...form, quantity: qty })
+      if (kind === 'entrada' && form.supplier.trim()) suppliersCache = null
       onSaved(data)
     } catch (e) { setError(e.response?.data?.error || 'Erro ao registrar.'); setSaving(false) }
   }
@@ -196,9 +280,10 @@ function MovementModal({ supply, location, kind, printers, onClose, onSaved }) {
           <input id="printer-supplies-quando" type="datetime-local" value={form.happened_at} onChange={e => set('happened_at', e.target.value)} />
         </div>
       </div>
+      {kind === 'entrada' && <EntryFields form={form} set={set} qty={qty} />}
       <div className="form-group">
         <label htmlFor="printer-supplies-observacao" className="label">Observação</label>
-        <input id="printer-supplies-observacao" value={form.note} maxLength={500} onChange={e => set('note', e.target.value)} placeholder={kind === 'entrada' ? 'Ex: NF 1234, fornecedor X' : kind === 'troca' ? 'Ex: contador 45.210 páginas, chamado #123' : 'Opcional'} />
+        <input id="printer-supplies-observacao" value={form.note} maxLength={500} onChange={e => set('note', e.target.value)} placeholder={kind === 'entrada' ? 'Opcional. Ex: veio com 1 caixa amassada' : kind === 'troca' ? 'Ex: contador 45.210 páginas, chamado #123' : 'Opcional'} />
       </div>
       {error && <p role="alert" className={s.error}>{error}</p>}
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!valid || saving} onClick={save}>{saving ? 'Registrando…' : 'Registrar'}</button>
@@ -207,29 +292,62 @@ function MovementModal({ supply, location, kind, printers, onClose, onSaved }) {
 }
 
 // ── Histórico do item no prédio ────────────────────────────────────────────
-function HistoryModal({ supply, location, onClose }) {
+function HistoryModal({ supply, location, canChange, onClose }) {
   const [rows, setRows] = useState(null)
+  const [editing, setEditing] = useState(null)
   useEffect(() => { api.get(`/printer-supplies/${supply.id}/movements`, { params: { location } }).then(r => setRows(r.data || [])).catch(() => setRows([])) }, [supply.id, location])
+  const missing = (rows || []).filter(m => m.kind === 'entrada' && !m.supplier && !m.invoice && m.unit_cost == null).length
+  // uma janela por vez (o Esc fecharia as duas): os detalhes tomam o lugar do
+  // histórico e, ao salvar ou fechar, o histórico volta já atualizado
+  if (editing) {
+    return (
+      <MovementDetailsModal
+        movement={editing}
+        onClose={() => setEditing(null)}
+        onSaved={saved => { suppliersCache = null; setRows(rs => rs.map(r => (r.id === saved.id ? { ...r, ...saved } : r))); setEditing(null) }}
+      />
+    )
+  }
   return (
-    <Modal title={`Histórico — ${supply.name} (${LOC_LABEL[location]})`} onClose={onClose} width={720}>
+    <Modal title={`Histórico — ${supply.name} (${LOC_LABEL[location]})`} onClose={onClose} width={760}>
       {!rows ? <p className={s.hint}>Carregando…</p> : rows.length === 0 ? <p className={s.hint}>Nenhuma movimentação ainda neste prédio.</p> : (
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead><tr><th>Quando</th><th>Movimento</th><th>Qtd</th><th>Saldo</th><th>Impressora / detalhe</th><th>Quem</th></tr></thead>
-            <tbody>
-              {rows.map(m => (
-                <tr key={m.id}>
-                  <td className={s.mono}>{fmtWhen(m.happened_at)}</td>
-                  <td>{KIND_LABEL[m.kind] || m.kind}{m.related_location ? ` ${LOC_LABEL[m.related_location]}` : ''}</td>
-                  <td className={m.delta < 0 ? s.neg : s.pos}>{m.delta > 0 ? `+${m.delta}` : m.delta}</td>
-                  <td className={s.mono}>{m.balance_after}</td>
-                  <td>{m.printer_model ? `${m.printer_model}${m.printer_department ? ` — ${m.printer_department}` : ''}${m.printer_ip ? ` (${m.printer_ip})` : ''}` : ''}{m.note ? <span className={s.note}>{m.printer_model ? ' · ' : ''}{m.note}</span> : ''}</td>
-                  <td>{m.user_name || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {missing > 0 && (
+            <p className={s.histNotice}>{missing === 1 ? '1 entrada está' : `${missing} entradas estão`} sem fornecedor, nota fiscal ou valor.{canChange ? ' Use "Completar" na linha para preencher.' : ''}</p>
+          )}
+          <div className={s.tableWrap}>
+            <table className={s.table}>
+              <thead><tr><th>Quando</th><th>Movimento</th><th>Qtd</th><th>Saldo</th><th>Detalhes</th><th>Quem</th><th><span className="sr-only">Ações</span></th></tr></thead>
+              <tbody>
+                {rows.map(m => {
+                  const detail = m.kind === 'entrada' ? entryDetail(m)
+                    : m.printer_model ? `${m.printer_model}${m.printer_department ? ` — ${m.printer_department}` : ''}${m.printer_ip ? ` (${m.printer_ip})` : ''}` : ''
+                  const incomplete = m.kind === 'entrada' && !detail
+                  return (
+                    <tr key={m.id}>
+                      <td className={s.mono}>{fmtWhen(m.happened_at)}</td>
+                      <td>{KIND_LABEL[m.kind] || m.kind}{m.related_location ? ` ${LOC_LABEL[m.related_location]}` : ''}</td>
+                      <td className={m.delta < 0 ? s.neg : s.pos}>{m.delta > 0 ? `+${m.delta}` : m.delta}</td>
+                      <td className={s.mono}>{m.balance_after}</td>
+                      <td>
+                        {incomplete ? <span className={s.histMissing}>Sem fornecedor, NF ou valor</span> : detail}
+                        {m.note ? <span className={s.histNote}>{m.note}</span> : null}
+                      </td>
+                      <td>{m.user_name || '—'}</td>
+                      <td className={s.histAction}>
+                        {canChange(m) && (
+                          <button type="button" className={`btn btn-ghost btn-sm ${s.histBtn}`} onClick={() => setEditing(m)}>
+                            {incomplete ? 'Completar' : 'Editar'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </Modal>
   )
@@ -399,7 +517,14 @@ export default function PrinterSuppliesPage() {
 
       {editing && <SupplyEditor supply={editing.id ? editing : null} knownModels={knownModels} onClose={() => setEditing(null)} onSaved={sp => { upsert(sp); setEditing(null) }} />}
       {moving && <MovementModal supply={moving.supply} location={location} kind={moving.kind} printers={printers} onClose={() => setMoving(null)} onSaved={sp => { upsert(sp); setMoving(null) }} />}
-      {history && <HistoryModal supply={history} location={location} onClose={() => setHistory(null)} />}
+      {history && (
+        <HistoryModal
+          supply={history}
+          location={location}
+          canChange={m => writable && (m.created_by === user?.id || user?.system_role === 'super_admin')}
+          onClose={() => setHistory(null)}
+        />
+      )}
     </div>
   )
 }

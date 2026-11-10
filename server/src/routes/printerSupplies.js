@@ -181,6 +181,52 @@ app.delete('/:id', async c => {
   return c.json({ ok: true })
 })
 
+// Detalhes da ENTRADA: fornecedor, nota fiscal e valor por unidade (R$).
+// Tudo opcional; valor aceita "60,50" ou "60.50".
+function cleanEntry(body) {
+  let unit = body.unit_cost
+  if (unit === '' || unit == null) unit = null
+  else {
+    unit = Number(String(unit).replace(/\s|R\$/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'))
+    if (!Number.isFinite(unit) || unit < 0 || unit > 1_000_000) return { error: 'Valor por unidade inválido' }
+    unit = Math.round(unit * 100) / 100
+  }
+  return { supplier: str(body.supplier, 120), invoice: str(body.invoice, 60), unit_cost: unit }
+}
+
+// GET /suppliers — fornecedores já usados nas entradas (sugestão no formulário)
+app.get('/suppliers', async c => {
+  const rows = await c.get('db').prepare(`
+    SELECT supplier, COUNT(*) AS n FROM printer_supply_movements
+    WHERE supplier IS NOT NULL GROUP BY supplier ORDER BY n DESC, supplier LIMIT 50
+  `).all()
+  return c.json(rows.map(r => r.supplier))
+})
+
+// PATCH /movements/:movId { supplier?, invoice?, unit_cost?, note? } — completa os
+// DETALHES de um movimento já registrado (quantidade e saldo não mudam: errou a
+// quantidade = registre um ajuste). Fornecedor/NF/valor só na entrada. Quem
+// registrou ou o Super Admin.
+app.patch('/movements/:movId', async c => {
+  const db = c.get('db')
+  const mov = await db.prepare('SELECT id, kind, created_by FROM printer_supply_movements WHERE id = ?').get(c.req.param('movId'))
+  if (!mov) return c.json({ error: 'Movimento não encontrado' }, 404)
+  if (mov.created_by !== c.get('user').id && !(await isSuperAdmin(c))) {
+    return c.json({ error: 'Só quem registrou (ou o Super Admin) completa este movimento.' }, 403)
+  }
+  const body = await c.req.json()
+  const note = str(body.note, 500)
+  if (mov.kind === 'entrada') {
+    const entry = cleanEntry(body)
+    if (entry.error) return c.json(entry, 400)
+    await db.prepare('UPDATE printer_supply_movements SET supplier = ?, invoice = ?, unit_cost = ?, note = ? WHERE id = ?')
+      .run(entry.supplier, entry.invoice, entry.unit_cost, note, mov.id)
+  } else {
+    await db.prepare('UPDATE printer_supply_movements SET note = ? WHERE id = ?').run(note, mov.id)
+  }
+  return c.json(await db.prepare('SELECT m.*, u.name AS user_name FROM printer_supply_movements m LEFT JOIN users u ON u.id = m.created_by WHERE m.id = ?').get(mov.id))
+})
+
 // GET /:id/movements?location= — histórico do item (mais recente primeiro)
 app.get('/:id/movements', async c => {
   const loc = c.req.query('location')
@@ -203,15 +249,16 @@ app.get('/:id/movements', async c => {
 // duas pessoas mexendo ao mesmo tempo não deixam o saldo errado.
 // `requireId`: só aplica se aquele outro movimento já foi gravado nesta mesma
 // transação (transferência: o destino só recebe se a origem saiu).
-function moveStatements({ id, supplyId, location, kind, expected, delta, printerId, relatedLocation, when, note, userId, requireId }) {
+function moveStatements({ id, supplyId, location, kind, expected, delta, printerId, relatedLocation, when, note, userId, requireId, entry = {} }) {
   const guard = requireId ? ' AND EXISTS (SELECT 1 FROM printer_supply_movements WHERE id = ?)' : ''
   return [
     { sql: 'INSERT OR IGNORE INTO printer_supply_stock (supply_id, location, quantity, min_quantity) VALUES (?, ?, 0, 0)', args: [supplyId, location] },
     { sql: `UPDATE printer_supply_stock SET quantity = quantity + ?, updated_at = datetime('now') WHERE supply_id = ? AND location = ? AND quantity = ?${guard}`, args: [delta, supplyId, location, expected, ...(requireId ? [requireId] : [])] },
     {
-      sql: `INSERT INTO printer_supply_movements (id, supply_id, location, kind, delta, balance_after, printer_id, related_location, happened_at, note, created_by)
-            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE changes() = 1`,
-      args: [id, supplyId, location, kind, delta, expected + delta, printerId || null, relatedLocation || null, when, note, userId],
+      sql: `INSERT INTO printer_supply_movements (id, supply_id, location, kind, delta, balance_after, printer_id, related_location, happened_at, note, created_by, supplier, invoice, unit_cost)
+            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE changes() = 1`,
+      args: [id, supplyId, location, kind, delta, expected + delta, printerId || null, relatedLocation || null, when, note, userId,
+        entry.supplier ?? null, entry.invoice ?? null, entry.unit_cost ?? null],
     },
   ]
 }
@@ -238,8 +285,10 @@ app.post('/:id/movements', async c => {
   let statements = []
   const ids = []
   if (kind === 'entrada') {
+    const entry = cleanEntry(body)
+    if (entry.error) return c.json(entry, 400)
     ids.push(uuid())
-    statements = moveStatements({ id: ids[0], supplyId: supply.id, location, kind, expected: current, delta: qty, when, note, userId })
+    statements = moveStatements({ id: ids[0], supplyId: supply.id, location, kind, expected: current, delta: qty, when, note, userId, entry })
   } else if (kind === 'troca') {
     const printer = body.printer_id ? await db.prepare('SELECT id, location FROM printers WHERE id = ?').get(body.printer_id) : null
     if (!printer) return c.json({ error: 'Escolha a impressora em que o insumo foi trocado' }, 400)

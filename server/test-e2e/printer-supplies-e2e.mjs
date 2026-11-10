@@ -6,7 +6,7 @@ import { SignJWT } from 'jose'
 const BASE = 'http://127.0.0.1:8799'
 const key = new TextEncoder().encode('testsecret')
 const tok = id => new SignJWT({ id, name: id, email: `${id}@colegioser.com`, tv: 0 }).setProtectedHeader({ alg: 'HS256' }).setExpirationTime('1h').sign(key)
-const T = { admin: await tok('u-test'), ti: await tok('d-ti-ana'), colab: await tok('u-col'), aud: await tok('u-aud') }
+const T = { admin: await tok('u-test'), ti: await tok('d-ti-ana'), ana: await tok('u-ana'), colab: await tok('u-col'), aud: await tok('u-aud') }
 const call = async (who, method, path, body) => {
   const r = await fetch(BASE + path, { method, headers: { Authorization: `Bearer ${T[who]}`, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
   let j = null; try { j = await r.json() } catch {}
@@ -78,6 +78,26 @@ r = await call('ti', 'GET', '/api/printer-supplies')
 expect('...e o saldo fica 0 (não −1)', qty((r.j || []).find(s => s.id === drum.id), 'sede'), 0)
 expect('...com 1 troca só no histórico', ((await call('ti', 'GET', `/api/printer-supplies/${drum.id}/movements`)).j || []).filter(m => m.kind === 'troca').length, 1)
 
+// ── Entrada com fornecedor, nota fiscal e valor (migração 0069) ──────────
+r = await call('ti', 'POST', `/api/printer-supplies/${toner.id}/movements`, { kind: 'entrada', location: 'sede', quantity: 3, supplier: '  Distribuidora Alfa ', invoice: '001234', unit_cost: '1.189,90' })
+expect('entrada com fornecedor/NF/valor aceita', r.s, 200)
+let hist = (await call('ti', 'GET', `/api/printer-supplies/${toner.id}/movements?location=sede`)).j || []
+const full = hist.find(m => m.invoice === '001234')
+expect('...grava fornecedor sem espaços, NF e valor "1.189,90" = 1189.9', `${full?.supplier}|${full?.invoice}|${full?.unit_cost}`, 'Distribuidora Alfa|001234|1189.9')
+expect('valor inválido recusado', (await call('ti', 'POST', `/api/printer-supplies/${toner.id}/movements`, { kind: 'entrada', location: 'sede', quantity: 1, unit_cost: 'abc' })).s, 400)
+expect('fornecedor aparece na lista de sugestões', ((await call('ti', 'GET', '/api/printer-supplies/suppliers')).j || []).includes('Distribuidora Alfa'), true)
+// completar uma entrada antiga (a de 5 com "NF 123" na observação)
+const old = hist.find(m => m.kind === 'entrada' && m.note === 'NF 123')
+r = await call('ti', 'PATCH', `/api/printer-supplies/movements/${old.id}`, { supplier: 'Distribuidora Alfa', invoice: '123', unit_cost: '189,90', note: '' })
+expect('quem registrou completa a entrada antiga', `${r.s}|${r.j?.invoice}|${r.j?.unit_cost}|${r.j?.note}`, '200|123|189.9|null')
+expect('...sem mexer na quantidade nem no saldo', `${r.j?.delta}|${r.j?.balance_after}`, `${old.delta}|${old.balance_after}`)
+expect('outra pessoa (não Super Admin) não completa', (await call('ana', 'PATCH', `/api/printer-supplies/movements/${old.id}`, { supplier: 'x' })).s, 403)
+expect('Super Admin completa', (await call('admin', 'PATCH', `/api/printer-supplies/movements/${old.id}`, { supplier: 'Distribuidora Beta', invoice: '123', unit_cost: '189,90' })).j?.supplier, 'Distribuidora Beta')
+expect('Auditor não completa', (await call('aud', 'PATCH', `/api/printer-supplies/movements/${old.id}`, { supplier: 'x' })).s, 403)
+const swap = hist.find(m => m.kind === 'troca')
+r = await call('ti', 'PATCH', `/api/printer-supplies/movements/${swap.id}`, { note: 'contador 45.210', supplier: 'ignorado' })
+expect('troca: só a observação muda', `${r.j?.note}|${r.j?.supplier}`, 'contador 45.210|null')
+
 // ── Editar e excluir ─────────────────────────────────────────────────────
 r = await call('ti', 'PUT', `/api/printer-supplies/${toner.id}`, { name: 'Toner Ricoh SP377 preto (alto rendimento)', minimums: { g5: 1 } })
 expect('edita nome e mínimo do G5', `${r.j?.name}|${r.j?.stocks?.g5?.min_quantity}|${r.j?.stocks?.sede?.min_quantity}`, 'Toner Ricoh SP377 preto (alto rendimento)|1|2')
@@ -85,7 +105,7 @@ expect('Analista não apaga do catálogo', (await call('ti', 'DELETE', `/api/pri
 r = await call('admin', 'DELETE', `/api/printer-supplies/${toner.id}`)
 expect('Super Admin: item com histórico só é desativado', r.j?.deactivated, true)
 expect('...e some da lista', ((await call('ti', 'GET', '/api/printer-supplies')).j || []).some(s => s.id === toner.id), false)
-expect('...mas o histórico continua na exportação (7 do toner + 2 do cilindro)', (await call('admin', 'GET', '/api/printer-supplies/export')).j?.movements?.length, 9)
+expect('...mas o histórico continua na exportação (8 do toner + 2 do cilindro)', (await call('admin', 'GET', '/api/printer-supplies/export')).j?.movements?.length, 10)
 
 console.log(ok ? '\nTUDO OK' : '\nHOUVE FALHAS')
 process.exit(ok ? 0 : 1)

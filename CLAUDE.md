@@ -49,7 +49,7 @@ npx wrangler deploy
 ```
 - Erro **7403** ("conta não autorizada") = wrangler logado na conta errada → `npx wrangler logout`, fechar a sessão
   do Cloudflare no navegador (ou aba anônima) e `npx wrangler login` com a conta certa. Às vezes é passageiro: tentar de novo.
-- Migrações em `migrations/NNNN_*.sql` (hoje até 0068). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
+- Migrações em `migrations/NNNN_*.sql` (hoje até 0069). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
 - Secrets (nunca no código): `JWT_SECRET`, `GLPI_APP_TOKEN`, `GLPI_USER_TOKEN`, `GOOGLE_SA_*`, `VAULT_ENCRYPTION_KEY`, Gmail/Resend etc. Variáveis públicas em `wrangler.jsonc`.
 
 ## Teste local (sem login Google)
@@ -168,6 +168,10 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   prédio** em `printer_supply_stock` (não soma o histórico), histórico em `printer_supply_movements` (entrada, troca NA impressora,
   transferência, ajuste). Movimento grava saldo + histórico na mesma transação com trava otimista (`quantity = esperado` + `changes()`):
   concorrência dá 409, nunca saldo negativo. Consumo = trocas dos últimos 90 dias ÷ 3; cartão da impressora tem "🧴 Histórico de insumos".
+  **Entrada com detalhes** (10/11/2026, migração 0069, pedido do Luiz — "ficou muito vago"): `supplier`, `invoice` (NF/pedido) e
+  `unit_cost` (R$ por unidade; total = × quantidade, só na tela/Excel) em `printer_supply_movements`; `GET /suppliers` sugere os já usados.
+  `PATCH /movements/:id` completa os DETALHES de um movimento já feito (nunca quantidade/saldo — errou = ajuste); quem registrou ou Super Admin.
+  No histórico, entrada sem fornecedor/NF/valor aparece em âmbar com "Completar".
 - **Telão PARISFE** (`/parisfe`, pública, sem login — pra TV): 2ª entrada do Vite (`client/parisfe.html` + `src/parisfe/`), fora do app
   React e do pré-cache do PWA (Three.js ~580 KB). Logo UniFECAF em 3D (`logo3d.js`, Three.js + bloom, desenhada do mesmo caminho SVG)
   gira e troca de lado com a rolagem; abertura + 7 valores + encerramento, uma tela cada. Modo TV: sem ninguém mexer, 9 s por seção e

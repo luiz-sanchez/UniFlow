@@ -270,6 +270,8 @@ export async function exportPrinterSuppliesXlsx() {
     kind: SUP_KIND[m.kind] + (m.related_location ? ` — ${SUP_LOC[m.related_location]}` : ''),
     delta: m.delta, balance: m.balance_after,
     printer: m.printer_model ? `${m.printer_model}${m.printer_ip ? ` (${m.printer_ip})` : ''}` : null,
+    supplier: m.supplier || null, invoice: m.invoice || null,
+    unit: m.unit_cost ?? null, total: m.unit_cost != null ? m.unit_cost * m.delta : null,
     note: m.note || null, user: m.user_name || null,
   }))
   const swaps = movements.filter(m => m.kind === 'troca' && m.printer_id)
@@ -312,6 +314,10 @@ export async function exportPrinterSuppliesXlsx() {
           { header: 'Qtd', key: 'delta', width: 7, type: 'int' },
           { header: 'Saldo depois', key: 'balance', width: 13, type: 'int' },
           { header: 'Impressora', key: 'printer', width: 30, wrap: true },
+          { header: 'Fornecedor', key: 'supplier', width: 22, wrap: true },
+          { header: 'Nota fiscal', key: 'invoice', width: 13 },
+          { header: 'Valor unitário', key: 'unit', width: 15, type: 'money' },
+          { header: 'Valor total', key: 'total', width: 16, type: 'money', total: 'sum' },
           { header: 'Observação', key: 'note', width: 30, wrap: true },
           { header: 'Registrado por', key: 'user', width: 20, total: 'count' },
         ],
