@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import { useVisiblePolling } from '../hooks/useVisiblePolling'
+import { useUrlState } from '../hooks/useUrlState'
 import { refreshAllGlpi } from '../utils/glpiRefresh'
 import Reveal from '../components/common/Reveal'
 import EntityPicker, { NoEntityNotice } from '../components/common/EntityPicker'
@@ -140,16 +141,16 @@ export default function TotalChamadosPage() {
   const [snapshot, setSnapshot] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [techFilter, setTechFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('') // string vazia, ou código(s) separados por vírgula
-  const [monthFilter, setMonthFilter] = useState('')
+  const [techFilter, setTechFilter] = useUrlState('tecnico')
+  const [statusFilter, setStatusFilter] = useUrlState('situacao') // string vazia, ou código(s) separados por vírgula
+  const [monthFilter, setMonthFilter] = useUrlState('mes')
   // Período que filtra TODOS os KPIs/gráficos (não só a tabela) — diferente
   // dos filtros acima, que só recortam a tabela dentro do snapshot já
   // carregado. Aqui muda até o próprio período do snapshot: ao setar,
   // o servidor recalcula tudo (status, prioridade, técnico, taxa de
   // resolução etc.) só com os chamados abertos dentro do intervalo.
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom] = useUrlState('de')
+  const [dateTo, setDateTo] = useUrlState('ate')
   const [customOpen, setCustomOpen] = useState(false)
   // atalhos: Este mês, 3 meses, Este ano, Tudo (datas locais — toISOString viraria o dia seguinte depois das 21h)
   const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -174,7 +175,7 @@ export default function TotalChamadosPage() {
   const tableRef = useRef(null)
   // Entidade do GLPI: o departamento da pessoa define qual aparece; quem enxerga todos
   // os departamentos pode escolher (entityChoice vazio = a entidade padrão do servidor).
-  const [entityChoice, setEntityChoice] = useState('')
+  const [entityChoice, setEntityChoice] = useUrlState('entidade')
   const [meta, setMeta] = useState({ entity: null, entities: [], noEntity: false })
 
   const load = () => {

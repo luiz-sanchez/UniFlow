@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import { useVisiblePolling } from '../hooks/useVisiblePolling'
+import { useUrlState } from '../hooks/useUrlState'
 import { refreshAllGlpi } from '../utils/glpiRefresh'
 import Reveal from '../components/common/Reveal'
 import TechVisibilityButton from '../components/common/TechVisibilityButton'
@@ -75,16 +76,16 @@ export default function BacklogPage() {
   const [snapshot, setSnapshot] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [techFilter, setTechFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('') // string vazia, ou código(s) separados por vírgula
-  const [monthFilter, setMonthFilter] = useState('')
-  const [ageFilter, setAgeFilter] = useState('') // faixa de idade, ou '__old__' = mais de 30 dias
-  const [priorityFilter, setPriorityFilter] = useState('') // '' | 'alta' (Alta ou acima)
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [techFilter, setTechFilter] = useUrlState('tecnico')
+  const [statusFilter, setStatusFilter] = useUrlState('situacao') // string vazia, ou código(s) separados por vírgula
+  const [monthFilter, setMonthFilter] = useUrlState('mes')
+  const [ageFilter, setAgeFilter] = useUrlState('idade') // faixa de idade, ou '__old__' = mais de 30 dias
+  const [priorityFilter, setPriorityFilter] = useUrlState('prioridade') // '' | 'alta' (Alta ou acima)
+  const [categoryFilter, setCategoryFilter] = useUrlState('categoria')
   const tableRef = useRef(null)
   // Entidade do GLPI: o departamento da pessoa define qual aparece; quem enxerga todos
   // os departamentos pode escolher (entityChoice vazio = a entidade padrão do servidor).
-  const [entityChoice, setEntityChoice] = useState('')
+  const [entityChoice, setEntityChoice] = useUrlState('entidade')
   const [meta, setMeta] = useState({ entity: null, entities: [], noEntity: false })
 
   const load = () => {

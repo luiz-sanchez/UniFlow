@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import api from '../services/api'
 import { useLiveRefresh } from '../hooks/useLiveRefresh'
+import { useUrlState } from '../hooks/useUrlState'
 import { useAuthStore } from '../store/authStore'
 import { canEdit as canEditModule } from '../utils/permissions'
 import { confirmDialog, alertDialog } from '../store/dialogStore'
@@ -605,7 +606,7 @@ export default function EquipmentLoansPage() {
   const [showInventory, setShowInventory] = useState(false)
   // 'abertos' = padrão: esconde os já devolvidos (continuam no banco; é só
   // escolher 'Todas as situações' ou 'Devolvido' no filtro pra ver).
-  const [statusFilter, setStatusFilter] = useState('abertos')
+  const [statusFilter, setStatusFilter] = useUrlState('situacao', 'abertos')
   const [search, setSearch] = useState('')
 
   // `silent` = recarga em segundo plano (tempo real): não mostra "carregando"

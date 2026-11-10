@@ -124,3 +124,11 @@
 .preset:hover { color: var(--text); }
 .presetOn { background: var(--surface-2); color: var(--text); }
 .periodBar > .preset { border: 1px solid var(--border); }
+
+/* Cabeçalho fixo (computador): a tabela rola dentro do próprio quadro e o
+   nome das colunas fica parado no topo. A linha de baixo do cabeçalho vira
+   sombra porque, com border-collapse, a borda some ao grudar. */
+@media (min-width: 1025px) {
+  .tableWrap { max-height: calc(100vh - 120px); overflow: auto; }
+  .tableWrap thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); box-shadow: inset 0 -1px 0 var(--border); }
+}

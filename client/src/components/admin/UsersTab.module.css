@@ -98,3 +98,11 @@
   .since::before { content: 'Entrou em '; }
   .actions { position: absolute; top: 12px; right: 12px; width: auto; }
 }
+
+/* Cabeçalho fixo (computador): a tabela rola dentro do próprio quadro e o
+   nome das colunas fica parado no topo. A linha de baixo do cabeçalho vira
+   sombra porque, com border-collapse, a borda some ao grudar. */
+@media (min-width: 1025px) {
+  .card { max-height: calc(100vh - 120px); overflow: auto; }
+  .card thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); box-shadow: inset 0 -1px 0 var(--border); }
+}

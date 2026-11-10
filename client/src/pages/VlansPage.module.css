@@ -1,6 +1,6 @@
 /* VLANs: tabelas de rede (endereços em fonte de largura fixa, que alinha os
    números) e as redes Wi-Fi com o mesmo campo de senha do Cofre. */
-.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 18px; }
+.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 18px;  max-width: var(--page-max); }
 .loading { display: flex; align-items: center; justify-content: center; height: 60vh; color: var(--text-muted); }
 .errorBox { text-align: center; padding: 72px 24px; color: var(--text-muted); font-size: 13.5px; line-height: 1.6; }
 

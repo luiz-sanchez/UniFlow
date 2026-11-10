@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import api from '../services/api'
 import { useLiveRefresh } from '../hooks/useLiveRefresh'
+import { useUrlState } from '../hooks/useUrlState'
 import { useAuthStore } from '../store/authStore'
 import { canEdit as canEditModule } from '../utils/permissions'
 import { confirmDialog, alertDialog } from '../store/dialogStore'
@@ -364,9 +365,9 @@ export default function LabIncidentsPage() {
   const { building = 'sede' } = useParams()
   const { user } = useAuthStore()
   const [items, setItems] = useState(null)
-  const [statusFilter, setStatusFilter] = useState('abertos')
+  const [statusFilter, setStatusFilter] = useUrlState('situacao', 'abertos')
   const [onlyUrgent, setOnlyUrgent] = useState(false)
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useUrlState('tipo')
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState(null) // null | {} novo | incidente
   const [openId, setOpenId] = useState(null)

@@ -8,6 +8,7 @@ import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import MemberPicker from '../components/common/MemberPicker'
 import { confirmDialog, alertDialog } from '../store/dialogStore'
+import { useUrlState } from '../hooks/useUrlState'
 import { avatarColor } from '../utils/avatarColor'
 import { parseDbTimestamp } from '../utils/formatDuration'
 import Reveal from '../components/common/Reveal'
@@ -137,10 +138,9 @@ export default function AdminPage() {
   const { user: me } = useAuthStore()
   // ?tab=logs&category=vault: link do aviso no sininho e do botão do Cofre (vale pra qualquer aba).
   const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState(() => {
-    const t = searchParams.get('tab')
-    return ['users', 'roles', 'departments', 'notifications', 'glpi', 'logs'].includes(t) ? t : 'users'
-  })
+  // a aba fica no endereço: F5 e "Voltar" respeitam a aba aberta
+  const [rawTab, setTab] = useUrlState('tab', 'users')
+  const tab = ['users', 'roles', 'departments', 'notifications', 'glpi', 'logs'].includes(rawTab) ? rawTab : 'users'
   const [users, setUsers] = useState([])
   const [departments, setDepartments] = useState([])
   const [roles, setRoles] = useState([])       // cargos (perfis de acesso)

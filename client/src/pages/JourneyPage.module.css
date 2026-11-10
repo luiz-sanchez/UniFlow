@@ -1,7 +1,7 @@
 /* Jornada: escolhe a pessoa nas fichas do topo; a trajetória é uma linha do
    tempo vertical em que o ANO é o capítulo (número grande na margem) e os
    marcos ficam na trilha com o mês. A história fica ao lado (embaixo no celular). */
-.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 18px; }
+.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 18px;  max-width: var(--page-max); }
 .loading { display: flex; align-items: center; justify-content: center; height: 60vh; color: var(--text-muted); }
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .addWrap { position: relative; }

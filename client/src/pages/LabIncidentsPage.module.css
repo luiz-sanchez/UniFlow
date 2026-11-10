@@ -1,7 +1,7 @@
 /* Incidentes nos laboratórios: lista em linhas (foto ou ícone do tipo, onde,
    quando), a gravidade como escala de 4 barras e a situação. No detalhe, o
    andamento é um passo a passo de verdade: aberto → em andamento → resolvido. */
-.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 18px; }
+.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 18px;  max-width: var(--page-max); }
 .loading { display: flex; align-items: center; justify-content: center; height: 60vh; color: var(--text-muted); }
 .muted { font-size: 13px; color: var(--text-muted); }
 

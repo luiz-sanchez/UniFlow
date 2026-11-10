@@ -1,6 +1,6 @@
 /* Time → Desempenho: a equipe em linhas (com os totais e as ações) e, ao lado,
    o mural com os últimos reconhecimentos e o motivo de cada um. */
-.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px; }
+.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px;  max-width: var(--page-max); }
 .loading { display: flex; align-items: center; justify-content: center; height: 60vh; color: var(--text-muted); }
 
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }

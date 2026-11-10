@@ -123,3 +123,11 @@
   .table td:not([data-label]) { grid-column: 1 / -1; order: -1; }
   .table td[data-label]::before { content: attr(data-label); display: block; font-size: 11.5px; color: var(--text-muted); margin-bottom: 2px; }
 }
+
+/* Cabeçalho fixo (computador): a tabela rola dentro do próprio quadro e o
+   nome das colunas fica parado no topo. A linha de baixo do cabeçalho vira
+   sombra porque, com border-collapse, a borda some ao grudar. */
+@media (min-width: 1025px) {
+  .tableCard { max-height: calc(100vh - 120px); overflow: auto; }
+  .tableCard thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); box-shadow: inset 0 -1px 0 var(--border); }
+}

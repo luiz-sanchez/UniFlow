@@ -1,7 +1,7 @@
 /* Agenda. Semana = linha do tempo dos 7 dias (o dia em número grande à
    esquerda, os eventos em linhas à direita); hoje tem a linha "Agora" que
    separa o que já passou do que vem. Mês = um painel só, dividido por linhas. */
-.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px; }
+.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px;  max-width: var(--page-max); }
 
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .title { font-size: 2rem; font-weight: 600; letter-spacing: -.032em; line-height: 1.1; }

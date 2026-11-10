@@ -1,7 +1,7 @@
 /* Aprovações: o que espera a SUA decisão vem primeiro. Cada pedido mostra as
    "assinaturas" — o avatar de cada aprovador com a marca da decisão — e o
    prazo em linguagem de gente (vencido em vermelho). */
-.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px; }
+.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px;  max-width: var(--page-max); }
 .loading { display: flex; align-items: center; justify-content: center; height: 60vh; color: var(--text-muted); }
 
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }

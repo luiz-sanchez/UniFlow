@@ -1,7 +1,7 @@
 /* Base de Conhecimento: estante de leitura. Lista com busca à esquerda, o artigo
    inteiro à direita. Texto pronto aparece como a resposta que vai ser colada no
    chamado, com o botão de copiar em destaque (o uso nº 1 da tela). */
-.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px; }
+.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px;  max-width: var(--page-max); }
 .loading { display: flex; align-items: center; justify-content: center; height: 60vh; color: var(--text-muted); }
 
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }

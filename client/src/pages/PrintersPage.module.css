@@ -1,6 +1,6 @@
 /* Impressoras: inventário do prédio numa tabela. O IP é o dado que o técnico
    mais usa (cola na hora de instalar), então vira um botão de copiar. */
-.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px; }
+.page { padding: 36px 32px; display: flex; flex-direction: column; gap: 20px;  max-width: var(--page-max); }
 .loading { display: flex; align-items: center; justify-content: center; height: 60vh; color: var(--text-muted); }
 
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }

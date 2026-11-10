@@ -10,7 +10,8 @@
 :global([data-theme="dark"]) .topbar { background: transparent; }
 
 /* ── Hamburger (mobile only) ── */
-.menuBtn { display: none; }
+/* Hamburger (só no celular): `.btn` global vinha depois e reexibia no computador */
+.topbar .menuBtn { display: none; }
 
 .goTo { flex: 1; display: flex; min-width: 0; }
 
@@ -111,7 +112,7 @@
 /* ── Mobile ── */
 @media (max-width: 768px) {
   .topbar { padding: 0 12px; gap: 8px; }
-  .menuBtn { display: flex; }
+  .topbar .menuBtn { display: flex; }
 }
 
 /* Notification panel full-width on very small screens */

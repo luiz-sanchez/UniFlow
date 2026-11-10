@@ -300,7 +300,11 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   Pendentes da varredura: escala de fonte (21 tamanhos), alvos < 24px.
   **web-design-guidelines (09/11/2026)**: título da aba por tela (`pageTitle` em `GoTo.jsx`, lista `PAGES` — tela nova entra lá),
   confirmações só pelo `confirmDialog` (nada de `window.confirm`), reticências "…" (não "...") nos textos, miniatura com width/height.
-  Ideia não feita: filtros/abas no endereço (link já filtrado).
+  **Computador (10/11/2026)**: telas de lista/formulário com `max-width: var(--page-max)` (1440 px, `index.css`) — Backlog, Total,
+  Escala, Organograma, Quadros e Início usam a largura toda. Filtros no endereço com `hooks/useUrlState.js` (Backlog, Total, Empréstimos,
+  Incidentes, abas do Admin): F5/link/"Voltar" respeitam; várias trocas no mesmo clique = 1 navegação; campo de TEXTO não vai pro
+  endereço (cursor pularia). Cabeçalho fixo (≥1025 px) em Usuários, Logs, Backlog, Total e Empréstimos: a tabela rola dentro do quadro.
+  ☰ da barra só no celular (`.topbar .menuBtn` — o `.btn` global reexibia).
   Prints locais com o Playwright CLI (`%APPDATA%\npm\playwright-cli.cmd`: `open`, `localstorage-set token ...`, `goto`, `screenshot --filename`).
   Ele roda pelo cmd: `&` na URL corta o resto e `=>` num `eval` vira redirecionamento (cria arquivos lixo na pasta) — use URLs sem `&`
   e `snapshot` pra esperar. Auditoria a11y local: `npm install --no-save axe-core` no client (some quando o npm reinstala).
