@@ -57,7 +57,7 @@ function MilestoneModal({ userId, milestone, onClose, onSaved }) {
       </div>
       <div className="form-group">
         <label htmlFor="journey-detalhes-opcional" className="label">Detalhes (opcional)</label>
-        <textarea id="journey-detalhes-opcional" rows={3} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+        <textarea id="journey-detalhes-opcional" rows={6} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
       </div>
       {error && <p role="alert" className={s.error}>{error}</p>}
       <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={!form.title.trim() || !form.event_date || saving} onClick={save}>

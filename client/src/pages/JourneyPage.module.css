@@ -67,7 +67,7 @@
 .mDate { font-size: 12.5px; font-weight: 500; color: var(--info-text); padding-top: 1px; }
 .mBody { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .mTitle { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4; }
-.mDesc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.mDesc { display: block; margin-top: 4px; font-size: 13px; color: var(--text-muted); line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; max-width: 72ch; }
 .mActions { display: inline-flex; gap: 2px; opacity: 0; transition: opacity .15s; }
 .milestone:hover .mActions, .milestone:focus-within .mActions { opacity: 1; }
 @media (hover: none) { .mActions { opacity: 1; } }
