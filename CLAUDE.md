@@ -172,6 +172,9 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   `unit_cost` (R$ por unidade; total = × quantidade, só na tela/Excel) em `printer_supply_movements`; `GET /suppliers` sugere os já usados.
   `PATCH /movements/:id` completa os DETALHES de um movimento já feito (nunca quantidade/saldo — errou = ajuste); quem registrou ou Super Admin.
   No histórico, entrada sem fornecedor/NF/valor aparece em âmbar com "Completar".
+  **Aba de cada prédio só lista os insumos DELE** (11/11/2026, pedido do Luiz): `isHere` = saldo, mínimo ou troca em 90 dias ali; o resto
+  do catálogo fica recolhido ("Mostrar todos"/"Mostrar o catálogo"; a busca procura no catálogo inteiro). Sem "outros prédios: X" na linha.
+  Menu "⋯" (`RowMenu`) é desenhado no `<body>` com posição fixa (dentro de tabela com rolagem era cortado) e sobe se não couber.
 - **Telão PARISFE** (`/parisfe`, pública, sem login — pra TV): 2ª entrada do Vite (`client/parisfe.html` + `src/parisfe/`), fora do app
   React e do pré-cache do PWA (Three.js ~580 KB). Logo UniFECAF em 3D (`logo3d.js`, Three.js + bloom, desenhada do mesmo caminho SVG)
   gira e troca de lado com a rolagem; abertura + 7 valores + encerramento, uma tela cada. Modo TV: sem ninguém mexer, 9 s por seção e
