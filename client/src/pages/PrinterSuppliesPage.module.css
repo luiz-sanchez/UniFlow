@@ -151,3 +151,9 @@
 .histNote { display: block; color: var(--text-muted); font-size: 12px; margin-top: 2px; }
 .histAction { text-align: right; white-space: nowrap; }
 .histBtn { min-height: 28px; }
+
+/* insumos do catálogo que não são usados neste prédio ficam recolhidos */
+.catalogToggle { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 12px; font-size: 13px; color: var(--text-muted); }
+.linkBtn { border: none; background: none; padding: 4px 0; color: var(--brand); font: inherit; font-weight: 600; cursor: pointer; }
+.linkBtn:hover { text-decoration: underline; }
+.empty .btn { margin-top: 14px; }

@@ -42,6 +42,8 @@ function forecast(supply, loc) {
   const qty = supply.stocks?.[loc]?.quantity || 0
   return { perMonth, months: perMonth > 0 ? qty / perMonth : null }
 }
+// insumo "deste prédio": tem saldo, mínimo ou troca recente aqui (o resto do catálogo fica recolhido)
+const isHere = (supply, loc) => { const st = supply.stocks?.[loc]; return !!st && (st.quantity > 0 || st.min_quantity > 0 || (supply.usage90?.[loc] || 0) > 0) }
 const isLow = (supply, loc) => { const st = supply.stocks?.[loc]; return !!st && st.min_quantity > 0 && st.quantity <= st.min_quantity }
 
 function ColorDot({ color }) {
@@ -364,6 +366,7 @@ export default function PrinterSuppliesPage() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [onlyLow, setOnlyLow] = useState(false)
+  const [showCatalog, setShowCatalog] = useState(false)
   const [editing, setEditing] = useState(null) // null | {} | supply
   const [moving, setMoving] = useState(null) // { supply, kind }
   const [history, setHistory] = useState(null) // supply
@@ -375,22 +378,27 @@ export default function PrinterSuppliesPage() {
 
   const knownModels = useMemo(() => [...new Set(printers.map(p => p.model.replace(/\s+/g, ' ').trim()))].sort((a, b) => a.localeCompare(b, 'pt-BR')), [printers])
   const lowByLoc = useMemo(() => Object.fromEntries(SUPPLY_LOCATIONS.map(l => [l.key, (supplies || []).filter(sp => isLow(sp, l.key)).length])), [supplies])
-  const filtered = useMemo(() => {
+  useEffect(() => { setShowCatalog(false) }, [location])
+  const { filtered, hiddenCount } = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return (supplies || []).filter(sp => {
+    const match = (supplies || []).filter(sp => {
       if (typeFilter && sp.type !== typeFilter) return false
       if (onlyLow && !isLow(sp, location)) return false
       if (q && ![sp.name, sp.code, sp.notes, ...sp.models].some(v => (v || '').toLowerCase().includes(q))) return false
       return true
     })
-  }, [supplies, search, typeFilter, onlyLow, location])
+    // buscando, mostra o catálogo todo (é assim que se acha um insumo pra dar a 1ª entrada aqui)
+    if (showCatalog || q) return { filtered: match, hiddenCount: 0 }
+    const here = match.filter(sp => isHere(sp, location))
+    return { filtered: here, hiddenCount: match.length - here.length }
+  }, [supplies, search, typeFilter, onlyLow, location, showCatalog])
   const stats = useMemo(() => {
     const list = supplies || []
     return {
       units: list.reduce((a, sp) => a + (sp.stocks?.[location]?.quantity || 0), 0),
       low: lowByLoc[location] || 0,
       swaps: list.reduce((a, sp) => a + (sp.usage90?.[location] || 0), 0),
-      items: list.length,
+      items: list.filter(sp => isHere(sp, location)).length,
     }
   }, [supplies, location, lowByLoc])
 
@@ -433,7 +441,7 @@ export default function PrinterSuppliesPage() {
           <strong>{stats.low}</strong><span>{onlyLow ? 'Mostrando só estes' : 'No mínimo ou abaixo'}</span>
         </button>
         <div className={s.stat}><strong>{stats.swaps}</strong><span>Trocas nos últimos 90 dias</span></div>
-        <div className={s.stat}><strong>{stats.items}</strong><span>Itens no catálogo</span></div>
+        <div className={s.stat}><strong>{stats.items}</strong><span>Insumos neste prédio</span></div>
       </div>
 
       <div className={s.toolbar}>
@@ -451,8 +459,10 @@ export default function PrinterSuppliesPage() {
 
       {filtered.length === 0 ? (
         <div className={s.empty}>
-          <h3>{supplies.length ? 'Nada com esse filtro' : 'Nenhum insumo cadastrado ainda'}</h3>
-          <p>{supplies.length ? 'Mude o filtro ou a busca.' : 'Cadastre os insumos (toner, cilindro, tinta...) com os modelos em que servem e o estoque mínimo de cada prédio. Depois é só dar entrada e registrar as trocas.'}</p>
+          <h3>{!supplies.length ? 'Nenhum insumo cadastrado ainda' : hiddenCount ? `Nenhum insumo em ${LOC_LABEL[location]} ainda` : 'Nada com esse filtro'}</h3>
+          {hiddenCount > 0 && <p>Para começar a controlar aqui, abra o catálogo e dê a primeira entrada.</p>}
+          {hiddenCount > 0 && <button type="button" className="btn btn-ghost" onClick={() => setShowCatalog(true)}>Mostrar o catálogo ({hiddenCount})</button>}
+          <p hidden={!!hiddenCount}>{supplies.length ? 'Mude o filtro ou a busca.' : 'Cadastre os insumos (toner, cilindro, tinta...) com os modelos em que servem e o estoque mínimo de cada prédio. Depois é só dar entrada e registrar as trocas.'}</p>
         </div>
       ) : (
         <div className={s.tableCard}>
@@ -466,12 +476,11 @@ export default function PrinterSuppliesPage() {
                   const st = sp.stocks[location]
                   const low = isLow(sp, location)
                   const f = forecast(sp, location)
-                  const otherStock = SUPPLY_LOCATIONS.filter(l => l.key !== location && sp.stocks[l.key]?.quantity > 0).map(l => `${l.label} ${sp.stocks[l.key].quantity}`).join(', ')
                   return (
                     <tr key={sp.id}>
                       <td className={s.supplyCell}>
                         <div className={s.supplyName}><ColorDot color={sp.color} />{sp.name}</div>
-                        <div className={s.supplyMeta}>{[sp.code && `Cód. ${sp.code}`, otherStock && `outros prédios: ${otherStock}`].filter(Boolean).join('; ')}</div>
+                        <div className={s.supplyMeta}>{sp.code && `Cód. ${sp.code}`}</div>
                       </td>
                       <td className={s.typeCell} data-label="Tipo">{SUPPLY_TYPES[sp.type] || sp.type}</td>
                       <td className={s.modelsCell} data-label="Serve em" title={sp.models.join(', ')}>{sp.models.length ? sp.models.join(', ') : <span className={s.muted}>—</span>}</td>
@@ -512,6 +521,16 @@ export default function PrinterSuppliesPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+      {filtered.length > 0 && (hiddenCount > 0 || (showCatalog && !search.trim())) && (
+        <div className={s.catalogToggle}>
+          {showCatalog
+            ? <button type="button" className={s.linkBtn} onClick={() => setShowCatalog(false)}>Mostrar só os insumos de {LOC_LABEL[location]}</button>
+            : <>
+                <span>{hiddenCount} {hiddenCount === 1 ? 'insumo do catálogo não é usado' : 'insumos do catálogo não são usados'} em {LOC_LABEL[location]}.</span>
+                <button type="button" className={s.linkBtn} onClick={() => setShowCatalog(true)}>Mostrar todos</button>
+              </>}
         </div>
       )}
 
