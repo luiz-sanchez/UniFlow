@@ -6,9 +6,10 @@
 .btn:hover, .btn[aria-expanded="true"] { border-color: var(--border); color: var(--text); }
 /* abre crescendo a partir do botão, em vez de aparecer de estalo */
 .menu { transform-origin: top right; transition: opacity var(--dur-fast) var(--ease-smooth), scale var(--dur) var(--ease-smooth), translate var(--dur) var(--ease-smooth); }
-@starting-style { .menu { opacity: 0; scale: .97; translate: 0 -4px; } }
+@starting-style { .menu { opacity: 0; scale: .97; translate: 0 -4px; } .menu.up { translate: 0 4px; } }
+.menu.up { transform-origin: bottom right; }
 .menu {
-  position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; min-width: 230px;
+  position: fixed; z-index: 5000; min-width: 230px; max-width: calc(100vw - 16px);
   background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   box-shadow: var(--shadow-md); padding: 4px; display: flex; flex-direction: column;
 }
