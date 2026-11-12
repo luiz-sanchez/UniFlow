@@ -147,7 +147,9 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   telas usam `useLiveRefresh(['recurso'], recargaSilenciosa)`. Ticket de 60 s assinado com chave separada (`JWT_SECRET:live`).
 - **Empréstimo de Equipamentos** (SEDE/CENTRO/G5): inventário com patrimônio, vários itens por reserva, grade de salas (copiada do site de
   horários por Browser Rendering; botão/cron de domingo), e-mail do solicitante só `@fecaf.com.br`, `@pro.fecaf.com.br`, `@colegioser.com`
-  (busca no diretório do Google Workspace), aviso de prazo (manhã até 10h/noite até 22h), mensagem rápida por e-mail, coluna "Registrado por".
+  (busca no diretório do Google Workspace). **Grade de salas** (`lib/roomScheduleSync.js`): o site abre no semestre MAIS NOVO da lista
+  (em nov/2026, 2027.2 vazio → grade toda "Disponível", sem professor); o sync escolhe o semestre de hoje (jan–jun .1, jul–dez .2) e
+  recusa leitura com < 20 aulas com professor. Aviso de prazo (manhã até 10h/noite até 22h), mensagem rápida por e-mail, coluna "Registrado por".
   **Respostas por e-mail entram no chat** (`lib/gmailInbox.js`, ver docs/INTEGRACOES.md): lê a caixa do Gmail nos minutos x3/x8 do
   cron de 1 min (ANTES do Backlog — depois dele a leitura falhava na maioria das rodadas) + recuperação: se a última leitura tem
   +7 min, o minuto seguinte relê; e ao abrir o chat. Status em `app_settings.gmail_inbox_status`. Bolinha vermelha no ✉️ = resposta nova. Teste: `MOCK_GMAIL=1 node test-e2e/node-server.mjs` +

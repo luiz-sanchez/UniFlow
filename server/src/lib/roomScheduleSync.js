@@ -14,7 +14,7 @@ const SITE_URL = 'https://unifecaf-horario.netlify.app/'
 
 // Roda no navegador. Devolve { days, statements } com o DELETE do intervalo
 // e os INSERTs (40 linhas cada) já escapados.
-function extractInPage(todayISO) {
+export function extractInPage(todayISO) {
   const buildingKey = title => /^CENTRO\b/.test(title) ? 'centro' : /^G5\b/.test(title) ? 'g5' : /^SEDE\b/.test(title) ? 'sede' : null
   const typeKey = cls => cls.includes('official') ? 'aula_oficial' : cls.includes('pre') ? 'pre_aula'
     : cls.includes('pos') ? 'pos_aula' : cls.includes('semi') ? 'semipresencial' : cls.includes('free') ? 'disponivel' : 'sem_uso'
@@ -52,6 +52,7 @@ function extractInPage(todayISO) {
   }
 
   const days = [...new Set(dayDates)].sort()
+  const classes = rows.filter(r => r[5]).length
   const statements = [`DELETE FROM room_schedule_snapshot WHERE building IN ('sede','centro','g5') AND day_date BETWEEN '${days[0]}' AND '${days[days.length - 1]}'`]
   for (let i = 0; i < rows.length; i += 40) {
     const values = rows.slice(i, i + 40)
@@ -59,7 +60,26 @@ function extractInPage(todayISO) {
       .join(',')
     statements.push(`INSERT INTO room_schedule_snapshot (id, building, room_name, day_date, occupation_type, class_code, professor_name) VALUES ${values}`)
   }
-  return { days, count: rows.length, statements }
+  return { days, count: rows.length, classes, statements }
+}
+
+// Semestre letivo de hoje no formato do site ("2026.2"): jan–jun = .1, jul–dez = .2.
+// O site abre no semestre MAIS NOVO da lista (em nov/2026 abria em 2027.2, vazio) —
+// sem escolher, a grade vinha toda "Disponível" e sem professor.
+export const semesterOf = iso => `${iso.slice(0, 4)}.${Number(iso.slice(5, 7)) <= 6 ? 1 : 2}`
+
+export async function selectSemester(page, semester) {
+  const sel = await page.evaluate(sem => {
+    const s = Array.from(document.querySelectorAll('select')).find(x => Array.from(x.options).some(o => /^\d{4}\.\d$/.test(o.value)))
+    if (!s) return null
+    s.setAttribute('data-uf-semester', '1')
+    return { has: Array.from(s.options).some(o => o.value === sem), current: s.value }
+  }, semester)
+  if (!sel) return // site sem seletor de semestre: segue com o que estiver na tela
+  if (!sel.has) throw new Error(`O site de horários não tem o semestre ${semester}`)
+  if (sel.current !== semester) await page.select('select[data-uf-semester]', semester)
+  // espera as aulas aparecerem (o site busca os dados do semestre ao trocar)
+  await page.waitForFunction(() => document.querySelectorAll('.disp-item').length > 0, { timeout: 20000 })
 }
 
 async function clickByText(page, selector, text) {
@@ -84,6 +104,7 @@ export async function runRoomScheduleSync(env) {
     await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(b => b.textContent.includes('Gestão e disponibilidade de salas')), { timeout: 15000 })
     await clickByText(page, 'button', 'Gestão e disponibilidade de salas')
     await page.waitForSelector('table tr.disp-campus-row-title', { timeout: 20000 })
+    await selectSemester(page, semesterOf(todayISO))
 
     results.push(await page.evaluate(extractInPage, todayISO))
 
@@ -98,7 +119,11 @@ export async function runRoomScheduleSync(env) {
 
   // Trava de segurança: se a leitura veio vazia/quebrada, não apaga a grade boa.
   const total = results.reduce((n, r) => n + r.count, 0)
-  if (results.some(r => r.count < 100)) throw new Error(`Leitura suspeita (${results.map(r => r.count).join(' + ')} linhas) — grade anterior mantida`)
+  // Conta só aulas com professor: uma grade toda "Disponível" tem centenas de linhas e passava.
+  // Basta UMA das duas semanas ter aula (a outra pode ser férias/recesso).
+  if (results.some(r => r.count < 100) || results.every(r => r.classes < 20)) {
+    throw new Error(`Leitura suspeita (${results.map(r => `${r.count} linhas/${r.classes} aulas`).join(' + ')}) — grade anterior mantida`)
+  }
 
   const statements = results.flatMap(r => r.statements)
   await env.DB.batch(statements.map(sql => env.DB.prepare(sql)))
