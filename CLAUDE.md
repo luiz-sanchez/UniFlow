@@ -49,7 +49,7 @@ npx wrangler deploy
 ```
 - Erro **7403** ("conta não autorizada") = wrangler logado na conta errada → `npx wrangler logout`, fechar a sessão
   do Cloudflare no navegador (ou aba anônima) e `npx wrangler login` com a conta certa. Às vezes é passageiro: tentar de novo.
-- Migrações em `migrations/NNNN_*.sql` (hoje até 0070). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
+- Migrações em `migrations/NNNN_*.sql` (hoje até 0071). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
 - Secrets (nunca no código): `JWT_SECRET`, `GLPI_APP_TOKEN`, `GLPI_USER_TOKEN`, `GOOGLE_SA_*`, `VAULT_ENCRYPTION_KEY`, Gmail/Resend etc. Variáveis públicas em `wrangler.jsonc`.
 
 ## Teste local (sem login Google)
@@ -154,13 +154,14 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   cron de 1 min (ANTES do Backlog — depois dele a leitura falhava na maioria das rodadas) + recuperação: se a última leitura tem
   +7 min, o minuto seguinte relê; e ao abrir o chat. Status em `app_settings.gmail_inbox_status`. Bolinha vermelha no ✉️ = resposta nova. Teste: `MOCK_GMAIL=1 node test-e2e/node-server.mjs` +
   `loan-replies-e2e.mjs`.
-  **Avisos pelo Google Chat** (16/11/2026, migração 0070; `lib/googleChat.js`, `routes/googleChat.js`): app "UniFlow" no projeto
-  320230369357 (org Colégio Ser = colegioser.com + fecaf.com.br + pro.fecaf.com.br), conta de serviço com escopo `chat.bot` (sem delegação).
-  Aviso do empréstimo e mensagem rápida vão TAMBÉM pro Chat (o e-mail continua). Com auth do app não dá pra criar a conversa: só chega
-  pra quem adicionou o app (ou Admin instalou); conversa guardada em `google_chat_dms` (evento ADDED_TO_SPACE ou `findDirectMessage` com o ID do diretório — e-mail dá 403 com a conta de serviço;
-  "não tem" fica 6 h). `POST /api/google-chat/events` = endpoint do console (verifica token do Google; montado ANTES do `timeEntries`,
-  que põe auth em `/api/*`). Ligar: Admin → Notificações (`gchat_loans_enabled`) + "Enviar teste para mim". Markdown padrão (`**negrito**`).
-  Teste: `gchat-e2e.mjs` (grupo MOCK_GMAIL do run-all). Próximo passo possível: resposta no Chat entrar no chat do empréstimo.
+  **Avisos pelo Google Chat** (16/11/2026, migrações 0070/0071; `lib/googleChat.js`, `routes/googleChat.js`): aviso do empréstimo e mensagem
+  rápida vão TAMBÉM pro Chat (o e-mail continua), como **conversa normal da conta helpdesk.ti** (pedido do Luiz: sem app pra instalar).
+  Conta de serviço com delegação (sub = `GOOGLE_IMPERSONATE_EMAIL`), escopos `chat.spaces.create` + `chat.messages.create` autorizados no
+  Google Admin (mesmo Client ID do Drive); conversa 1:1 via `spaces:setup` (aceita e-mail), guardada em `google_chat_dms` (desconhecido = 6 h).
+  O app "UniFlow" do console (projeto 320230369357) precisa existir pra usar a API; `/api/google-chat/events` só responde quem falar com ele
+  (montado ANTES do `timeEntries`, que põe auth em `/api/*`). Tentativa anterior com app (chat.bot) exigia instalar pra cada um — abandonada.
+  Ligar: Admin → Notificações (`gchat_loans_enabled`) + "Enviar teste para mim". Formatação `*negrito*`. Teste: `gchat-e2e.mjs` (grupo MOCK_GMAIL).
+  Próximo passo possível: resposta no Chat entrar no chat do empréstimo.
 - Desempenho (estrelas/luas — 👎 privado: quem recebeu + Super Admin), Jornada, Organograma, Impressoras (drag-and-drop), Compras por mês,
   Aprovações (trocar decisão), Cofre de Senhas (AES-GCM), **VLANs** (Gestão; senhas de Wi-Fi no banco **cifradas** como o Cofre — `password_enc/iv`, migração 0063; texto puro
   em `password` vindo de seed é cifrado e apagado pela rota ao abrir a tela/mostrar; não no repo; acesso = lista do Cofre).

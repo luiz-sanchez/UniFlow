@@ -733,8 +733,8 @@ export default function AdminPage() {
               <div>
                 <h3 id="gchat-loans" className={s.digestTitle}>Empréstimos no Google Chat</h3>
                 <p className={s.digestSub}>
-                  Além do e-mail, o solicitante recebe o aviso do empréstimo e as mensagens rápidas na conversa com o app UniFlow.
-                  Só chega para quem tem o app no Chat; os outros continuam só com o e-mail.
+                  Além do e-mail, o solicitante recebe o aviso do empréstimo e as mensagens rápidas no Google Chat, numa conversa
+                  normal com a conta da T.I. (a mesma que envia os e-mails).
                 </p>
               </div>
               <label className={s.switch}>

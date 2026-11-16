@@ -126,6 +126,13 @@ if (process.env.MOCK_GMAIL) {
       return json({ people: q.includes('@') ? [{ emailAddresses: [{ value: q }], metadata: { sources: [{ type: 'DOMAIN_PROFILE', id: `id-${q}` }] } }] : [] })
     }
     if (url.host === 'chat.googleapis.com') {
+      // spaces.setup como a conta da T.I.: cria/devolve a conversa 1:1 (e-mail desconhecido = 400)
+      if (url.pathname === '/v1/spaces:setup') {
+        mock.chatLookups++
+        const email = JSON.parse(init.body).memberships[0].member.name.replace('users/', '')
+        if (email.startsWith('nao.existe')) return json({ error: { code: 400 } }, 400)
+        return json({ name: `spaces/DM-${email}`, spaceType: 'DIRECT_MESSAGE' })
+      }
       if (url.pathname === '/v1/spaces:findDirectMessage') {
         mock.chatLookups++
         // como o Google: com a conta de serviço, e-mail não serve — só o id (users/id-<email> aqui)
