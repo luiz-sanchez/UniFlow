@@ -157,7 +157,7 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   **Avisos pelo Google Chat** (16/11/2026, migração 0070; `lib/googleChat.js`, `routes/googleChat.js`): app "UniFlow" no projeto
   320230369357 (org Colégio Ser = colegioser.com + fecaf.com.br + pro.fecaf.com.br), conta de serviço com escopo `chat.bot` (sem delegação).
   Aviso do empréstimo e mensagem rápida vão TAMBÉM pro Chat (o e-mail continua). Com auth do app não dá pra criar a conversa: só chega
-  pra quem adicionou o app (ou Admin instalou); conversa guardada em `google_chat_dms` (evento ADDED_TO_SPACE ou `findDirectMessage`;
+  pra quem adicionou o app (ou Admin instalou); conversa guardada em `google_chat_dms` (evento ADDED_TO_SPACE ou `findDirectMessage` com o ID do diretório — e-mail dá 403 com a conta de serviço;
   "não tem" fica 6 h). `POST /api/google-chat/events` = endpoint do console (verifica token do Google; montado ANTES do `timeEntries`,
   que põe auth em `/api/*`). Ligar: Admin → Notificações (`gchat_loans_enabled`) + "Enviar teste para mim". Markdown padrão (`**negrito**`).
   Teste: `gchat-e2e.mjs` (grupo MOCK_GMAIL do run-all). Próximo passo possível: resposta no Chat entrar no chat do empréstimo.

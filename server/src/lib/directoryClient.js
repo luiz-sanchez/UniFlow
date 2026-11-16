@@ -51,7 +51,7 @@ const stripAccents = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toL
 async function searchPeople(token, query) {
   const url = new URL('https://people.googleapis.com/v1/people:searchDirectoryPeople')
   url.searchParams.set('query', query)
-  url.searchParams.set('readMask', 'names,emailAddresses')
+  url.searchParams.set('readMask', 'names,emailAddresses,metadata')
   // As duas fontes juntas: perfil de diretório (org inteira) E contato de
   // domínio (gente que só aparece como "contato compartilhado", conforme
   // a configuração de visibilidade de cada usuário) — com só a primeira,
@@ -123,4 +123,15 @@ export async function directorySearchByName(env, name) {
 
 export function directoryConfigured(env) {
   return !!(env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_PRIVATE_KEY && env.GOOGLE_IMPERSONATE_EMAIL)
+}
+
+// Id do usuário no Google Workspace (o mesmo do Google Chat: users/{id}) a
+// partir do e-mail — o findDirectMessage do Chat com a conta de serviço não
+// aceita e-mail, só o id. null se não achar (ou não for perfil da organização).
+export async function directoryUserIdByEmail(env, email) {
+  const token = await getAccessToken(env)
+  const target = email.trim().toLowerCase()
+  const people = await searchPeople(token, target)
+  const p = people.find(x => (x.emailAddresses || []).some(e => e.value?.toLowerCase() === target))
+  return p?.metadata?.sources?.find(s => s.type === 'DOMAIN_PROFILE')?.id || null
 }

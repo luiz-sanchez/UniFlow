@@ -59,12 +59,14 @@ app.post('/test', auth, async c => {
   const me = await db.prepare('SELECT email, system_role FROM users WHERE id = ?').get(c.get('user').id)
   if (me?.system_role !== 'super_admin') return c.json({ error: 'Acesso restrito ao Super Admin.' }, 403)
   const enabled = await chatEnabled(db)
+  // teste é sob demanda: não usa o "não tem o app" guardado (pode ter acabado de adicionar)
+  await db.prepare('DELETE FROM google_chat_dms WHERE email = ? AND space IS NULL').run(me.email.toLowerCase())
   const r = await sendChatToEmail(c.env, db, me.email,
     `**Teste do UniFlow** ✅\nSe você está lendo isto, os avisos de empréstimo pelo Google Chat estão funcionando${enabled ? '' : ' (ainda desligados no Admin — só este teste saiu)'}.`,
     { force: true })
   if (r.ok) return c.json({ ok: true })
   const error = r.reason === 'no_dm'
-    ? 'Você ainda não adicionou o app UniFlow no Google Chat (Novo chat → Apps → UniFlow). Depois de adicionar, tente de novo.'
+    ? `Não achei o app UniFlow no Google Chat de ${me.email}. Entre no Chat com essa conta e adicione o app (Novo chat → Encontrar apps → UniFlow); depois tente de novo.`
     : r.reason === 'off' ? 'A conta de serviço do Google não está configurada no servidor.'
     : `O Google Chat recusou: ${r.error}`
   return c.json({ error }, 502)

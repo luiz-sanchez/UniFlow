@@ -10,6 +10,7 @@
 // e guardamos também o "não tem" por 6 h pra não perguntar a cada empréstimo.
 // O e-mail continua saindo sempre — o Chat é um aviso a mais.
 import { SignJWT, importPKCS8, createRemoteJWKSet, jwtVerify, decodeJwt } from 'jose'
+import { directoryConfigured, directoryUserIdByEmail } from './directoryClient.js'
 
 const SCOPE = 'https://www.googleapis.com/auth/chat.bot'
 const API = 'https://chat.googleapis.com/v1'
@@ -61,10 +62,16 @@ export async function findDmSpace(env, db, email) {
   if (row?.space) return row.space
   if (row && Date.now() - Date.parse(row.checked_at + 'Z') < NEGATIVE_TTL_MS) return null
 
-  const res = await chatFetch(env, `/spaces:findDirectMessage?name=${encodeURIComponent(`users/${e}`)}`)
+  // Com a conta de serviço o Google só aceita o id da pessoa (users/123), não o
+  // e-mail — o id vem do diretório (People API, mesma delegação da busca de nomes).
   let space = null
-  if (res.ok) space = (await res.json()).name || null
-  else if (res.status !== 404) throw new Error(`Chat findDirectMessage respondeu ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`)
+  let userId = null
+  if (directoryConfigured(env)) {
+    try { userId = await directoryUserIdByEmail(env, e) } catch (err) { console.error('[gchat] diretório falhou', err.message) }
+  }
+  const res = userId ? await chatFetch(env, `/spaces:findDirectMessage?name=users/${userId}`) : null
+  if (res?.ok) space = (await res.json()).name || null
+  else if (res && res.status !== 404) throw new Error(`Chat findDirectMessage respondeu ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`)
   await rememberDm(db, e, space)
   return space
 }

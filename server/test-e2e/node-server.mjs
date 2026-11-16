@@ -107,23 +107,31 @@ if (process.env.MOCK_GMAIL) {
   const { generateKeyPairSync } = await import('node:crypto')
   Object.assign(env, {
     GMAIL_CLIENT_ID: 'id', GMAIL_CLIENT_SECRET: 'secret', GMAIL_REFRESH_TOKEN: 'refresh', GMAIL_SENDER_EMAIL: 'helpdesk.ti@fecaf.com.br',
-    GOOGLE_SA_EMAIL: 'sa@test.iam.gserviceaccount.com',
+    GOOGLE_SA_EMAIL: 'sa@test.iam.gserviceaccount.com', GOOGLE_IMPERSONATE_EMAIL: 'helpdesk.ti@fecaf.com.br',
     GOOGLE_SA_PRIVATE_KEY: generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' }),
   })
   const b64url = s => Buffer.from(s, 'utf8').toString('base64url')
   const realFetch = globalThis.fetch
   const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
   globalThis.fetch = async (input, init = {}) => {
-    const url = new URL(typeof input === 'string' ? input : input.url)
+    const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url)
     if (url.host === 'oauth2.googleapis.com') {
       const body = new URLSearchParams(String(init.body || ''))
       return json({ access_token: body.get('grant_type') === 'refresh_token' ? 'oauth-token' : 'sa-token' })
     }
     // Google Chat de mentira: mock.chatDms = { email: 'spaces/X' } (quem "adicionou o app")
+    // Diretório de mentira: todo e-mail existe, com id "id-<email>"
+    if (url.host === 'people.googleapis.com' && url.pathname.endsWith(':searchDirectoryPeople')) {
+      const q = url.searchParams.get('query')
+      return json({ people: q.includes('@') ? [{ emailAddresses: [{ value: q }], metadata: { sources: [{ type: 'DOMAIN_PROFILE', id: `id-${q}` }] } }] : [] })
+    }
     if (url.host === 'chat.googleapis.com') {
       if (url.pathname === '/v1/spaces:findDirectMessage') {
         mock.chatLookups++
-        const email = url.searchParams.get('name').replace('users/', '')
+        // como o Google: com a conta de serviço, e-mail não serve — só o id (users/id-<email> aqui)
+        const name = url.searchParams.get('name')
+        if (name.includes('@') && !name.startsWith('users/id-')) return json({ error: { code: 403, message: 'Service account authentication doesn\'t support access to user information using email aliases.' } }, 403)
+        const email = name.replace('users/id-', '')
         return mock.chatDms[email] ? json({ name: mock.chatDms[email], spaceType: 'DIRECT_MESSAGE' }) : json({ error: { code: 404 } }, 404)
       }
       const m = url.pathname.match(/^\/v1\/(spaces\/[^/]+)\/messages$/)
@@ -162,7 +170,7 @@ env.GOOGLE_CLIENT_ID ||= 'mock-google-client'
 {
   const prevFetch = globalThis.fetch
   globalThis.fetch = async (input, init) => {
-    const href = typeof input === 'string' ? input : input.url
+    const href = typeof input === 'string' || input instanceof URL ? String(input) : input.url
     if (href.startsWith('https://www.googleapis.com/oauth2/v3/certs')) {
       return new Response(JSON.stringify({ keys: [googleJwk] }), { headers: { 'Content-Type': 'application/json' } })
     }
