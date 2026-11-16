@@ -27,7 +27,8 @@ export async function chatEnabled(db) {
 
 async function getChatToken(env) {
   if (cachedToken && cachedToken.exp > Date.now() + 60_000) return cachedToken.token
-  const pem = env.GOOGLE_SA_PRIVATE_KEY.includes('\n') ? env.GOOGLE_SA_PRIVATE_KEY.replace(/\n/g, '\n') : env.GOOGLE_SA_PRIVATE_KEY
+  // o secret guarda a chave com "\n" escrito (barra + n), como no JSON da conta de serviço
+  const pem = env.GOOGLE_SA_PRIVATE_KEY.includes('\\n') ? env.GOOGLE_SA_PRIVATE_KEY.replace(/\\n/g, '\n') : env.GOOGLE_SA_PRIVATE_KEY
   const key = await importPKCS8(pem, 'RS256')
   const now = Math.floor(Date.now() / 1000)
   const assertion = await new SignJWT({ scope: SCOPE })

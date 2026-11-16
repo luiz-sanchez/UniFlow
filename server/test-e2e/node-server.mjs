@@ -108,7 +108,8 @@ if (process.env.MOCK_GMAIL) {
   Object.assign(env, {
     GMAIL_CLIENT_ID: 'id', GMAIL_CLIENT_SECRET: 'secret', GMAIL_REFRESH_TOKEN: 'refresh', GMAIL_SENDER_EMAIL: 'helpdesk.ti@fecaf.com.br',
     GOOGLE_SA_EMAIL: 'sa@test.iam.gserviceaccount.com', GOOGLE_IMPERSONATE_EMAIL: 'helpdesk.ti@fecaf.com.br',
-    GOOGLE_SA_PRIVATE_KEY: generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' }),
+    // como no secret de produção: quebras de linha escritas como "\n" (barra + n)
+    GOOGLE_SA_PRIVATE_KEY: generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' }).replace(/\n/g, '\\n'),
   })
   const b64url = s => Buffer.from(s, 'utf8').toString('base64url')
   const realFetch = globalThis.fetch
