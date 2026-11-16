@@ -2,6 +2,7 @@
 // equipamento é registrado (aba Empréstimo de Equipamentos). Dois textos, da
 // T.I.: um pro período da manhã (devolver até 10h) e outro pro da noite (até 22h).
 import { queueEmail, flushOutbox } from './email.js'
+import { sendChatToEmail } from './googleChat.js'
 
 const HELP_EMAIL = 'meajuda@fecaf.com.br'
 
@@ -10,11 +11,13 @@ const VARIANTS = {
     subject: 'Prazo para devolução de equipamentos – período da manhã (até às 10h)',
     intro: 'Informamos que todos os equipamentos retirados junto à equipe de T.I. no período da manhã (Chromebooks, controles de projetor, caixas de som, entre outros) devem ser devolvidos até às 10h.',
     reason: 'A devolução dentro desse horário é essencial para que possamos conferir, carregar e preparar os equipamentos para o uso dos demais colegas nos períodos seguintes.',
+    chatDeadline: 'até as **10h**',
   },
   noite: {
     subject: 'Prazo para devolução de equipamentos – até às 22h',
     intro: 'Informamos que todos os equipamentos retirados junto à equipe de T.I. (Chromebooks, controles de projetor, caixas de som, entre outros) devem ser devolvidos até às 22h do mesmo dia da retirada.',
     reason: 'A devolução dentro desse horário é essencial para que possamos conferir, carregar e preparar os equipamentos para o uso dos demais colegas no dia seguinte.',
+    chatDeadline: 'até as **22h** de hoje',
   },
 }
 
@@ -42,6 +45,8 @@ export async function sendLoanQuickMessage(env, db, { to, requesterName, loan, m
     related_type: 'equipment_loan_message', related_id: loanId, plain: true,
   })
   const result = await flushOutbox(env, db)
+  // aviso a mais no Google Chat (se a pessoa tem o app); não muda o resultado do e-mail
+  await sendChatToEmail(env, db, to, `**Mensagem da T.I. sobre o seu empréstimo** (${itemLine})\n\n${message}`)
   const row = await db.prepare('SELECT status, error FROM email_outbox WHERE id = ?').get(outboxId)
   if (row?.status === 'sent') return { ok: true }
   if (!result.provider) return { ok: false, error: 'Nenhum provedor de e-mail configurado.' }
@@ -78,6 +83,11 @@ export async function sendLoanDeadlineEmail(env, db, { to, requesterName, period
 
     await queueEmail(db, { to_email: to, subject: v.subject, html, text, related_type: 'equipment_loan', related_id: loanId, plain: true })
     await flushOutbox(env, db)
+    await sendChatToEmail(env, db, to, [
+      `**${itemLines.length === 1 ? 'Equipamento registrado' : 'Equipamentos registrados'} em seu nome**`,
+      ...itemLines.map(i => `- ${i}`), '',
+      `Devolva à equipe de T.I. ${v.chatDeadline}. Precisa ficar mais tempo? Abra um chamado pelo e-mail ${HELP_EMAIL}.`,
+    ].join('\n'))
     return true
   } catch (e) {
     console.error('E-mail de prazo de devolução falhou', e.message)

@@ -100,7 +100,9 @@ if (process.env.RATE_LIMIT) {
 //   POST /__mock/cron         {cron, minute}                              → roda o scheduled()
 //   GET  /__mock/setting?key=  ·  POST /__mock/setting {key, value}       → lê / grava app_settings
 //   POST /__mock/sql          {sql, args?}                               → roda SQL e devolve as linhas
-const mock = { sent: [], inbox: [], oauthCanRead: true }
+//   POST /__mock/gchat/dms {email: space}  ·  GET /__mock/gchat/sent       → Google Chat
+//   POST /__mock/gchat-token {aud}                                       → token de evento do Chat
+const mock = { sent: [], inbox: [], oauthCanRead: true, chatDms: {}, chatSent: [], chatLookups: 0 }
 if (process.env.MOCK_GMAIL) {
   const { generateKeyPairSync } = await import('node:crypto')
   Object.assign(env, {
@@ -116,6 +118,17 @@ if (process.env.MOCK_GMAIL) {
     if (url.host === 'oauth2.googleapis.com') {
       const body = new URLSearchParams(String(init.body || ''))
       return json({ access_token: body.get('grant_type') === 'refresh_token' ? 'oauth-token' : 'sa-token' })
+    }
+    // Google Chat de mentira: mock.chatDms = { email: 'spaces/X' } (quem "adicionou o app")
+    if (url.host === 'chat.googleapis.com') {
+      if (url.pathname === '/v1/spaces:findDirectMessage') {
+        mock.chatLookups++
+        const email = url.searchParams.get('name').replace('users/', '')
+        return mock.chatDms[email] ? json({ name: mock.chatDms[email], spaceType: 'DIRECT_MESSAGE' }) : json({ error: { code: 404 } }, 404)
+      }
+      const m = url.pathname.match(/^\/v1\/(spaces\/[^/]+)\/messages$/)
+      if (m && init.method === 'POST') { mock.chatSent.push({ space: m[1], text: JSON.parse(init.body).text }); return json({ name: `${m[1]}/messages/${mock.chatSent.length}` }) }
+      return json({ error: 'not found' }, 404)
     }
     if (url.host !== 'gmail.googleapis.com') return realFetch(input, init)
     const token = String(init.headers?.Authorization || '').replace('Bearer ', '')
@@ -162,6 +175,13 @@ const mockGoogleToken = ({ email, name }) => new SignJWT({ email, name: name || 
 
 async function mockControl(req, url, body) {
   if (url.pathname === '/__mock/google-token') return { credential: await mockGoogleToken(JSON.parse(body)) }
+  if (url.pathname === '/__mock/gchat/dms') { Object.assign(mock.chatDms, JSON.parse(body)); return { ok: true } }
+  if (url.pathname === '/__mock/gchat/sent') return { sent: mock.chatSent, lookups: mock.chatLookups }
+  if (url.pathname === '/__mock/gchat-token') {
+    const { aud, email = 'service-320230369357@gcp-sa-gsuiteaddons.iam.gserviceaccount.com' } = JSON.parse(body)
+    return { token: await new SignJWT({ email, email_verified: true }).setProtectedHeader({ alg: 'RS256', kid: 'mock-google' })
+      .setIssuer('https://accounts.google.com').setAudience(aud).setIssuedAt().setExpirationTime('5m').sign(googleKeys.privateKey) }
+  }
   if (url.pathname === '/__mock/gmail/inbox') { mock.inbox.push(JSON.parse(body)); return { ok: true } }
   if (url.pathname === '/__mock/gmail/sent') return mock.sent
   if (url.pathname === '/__mock/gmail/mode') { Object.assign(mock, JSON.parse(body)); return { ok: true } }

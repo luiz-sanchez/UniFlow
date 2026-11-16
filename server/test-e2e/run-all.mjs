@@ -13,6 +13,7 @@ const BASE = 'http://127.0.0.1:8799'
 const GROUPS = [
   { env: {}, suites: ['roles', 'dept', 'developments', 'lab-incidents', 'printer-supplies', 'success-cases', 'dept-modules', 'labels', 'machine-standards', 'kudos', 'shifts', 'inventory', 'teacher-portal', 'audit', 'security', 'download-ticket'] },
   { env: { RATE_LIMIT: '1' }, suites: ['secrets'] },
+  { env: { MOCK_GMAIL: '1' }, suites: ['gchat'] },
 ]
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))

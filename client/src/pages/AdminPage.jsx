@@ -435,6 +435,17 @@ export default function AdminPage() {
     }
   }
 
+  const [chatTest, setChatTest] = useState(null)
+  const sendChatTest = async () => {
+    setChatTest({ type: 'loading', text: 'Enviando…' })
+    try {
+      await api.post('/google-chat/test')
+      setChatTest({ type: 'success', text: 'Enviado! Confira a conversa com o UniFlow no Google Chat.' })
+    } catch (e) {
+      setChatTest({ type: 'error', text: e.response?.data?.error || 'Erro ao enviar o teste.' })
+    }
+  }
+
   const outboxRows = outbox.rows ?? outbox.results ?? []
   const pendingOutboxCount = outbox.pendingCount ?? outboxRows.length ?? 0
 
@@ -714,6 +725,38 @@ export default function AdminPage() {
               onAddEmail={email => addDigestEmail('daily', email)}
               onRemove={id => removeDigestRecipient('daily', id)}
             />
+          </section>
+
+          {/* Google Chat — avisos de empréstimo */}
+          <section className={s.panelRow} aria-labelledby="gchat-loans">
+            <div className={s.digestHeader}>
+              <div>
+                <h3 id="gchat-loans" className={s.digestTitle}>Empréstimos no Google Chat</h3>
+                <p className={s.digestSub}>
+                  Além do e-mail, o solicitante recebe o aviso do empréstimo e as mensagens rápidas na conversa com o app UniFlow.
+                  Só chega para quem tem o app no Chat; os outros continuam só com o e-mail.
+                </p>
+              </div>
+              <label className={s.switch}>
+                <span className="sr-only">Enviar os avisos de empréstimo pelo Google Chat</span>
+                <input
+                  type="checkbox"
+                  checked={settings.gchat_loans_enabled === 'true'}
+                  onChange={e => updateSetting('gchat_loans_enabled', e.target.checked ? 'true' : 'false')}
+                />
+                <span className={s.switchTrack} />
+              </label>
+            </div>
+            <div className={s.testRow}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={sendChatTest} disabled={chatTest?.type === 'loading'}>
+                <LineIcon name="send" size={14} /> Enviar teste para mim
+              </button>
+            </div>
+            {chatTest && (
+              <p role="status" className={`${s.cardNote} ${chatTest.type === 'success' ? s.msgOk : chatTest.type === 'error' ? s.msgErr : ''}`}>
+                {chatTest.text}
+              </p>
+            )}
           </section>
           </div>
 

@@ -45,6 +45,7 @@ import successCasesRoutes from './routes/successCases.js'
 import machineStandardsRoutes from './routes/machineStandards.js'
 import printerSuppliesRoutes from './routes/printerSupplies.js'
 import auditRoutes from './routes/audit.js'
+import googleChatRoutes from './routes/googleChat.js'
 import { broadcastLive } from './lib/liveHub.js'
 import { auditInBackground, purgeAuditLogs } from './lib/audit.js'
 
@@ -142,7 +143,7 @@ app.use('/api/*', async (c, next) => {
 // Perfil "Auditor" (system_role='auditor'): enxerga tudo de todo mundo, mas não
 // pode alterar NADA além da Base de Conhecimento — essa regra também mora aqui:
 // qualquer requisição não-GET dele é rejeitada antes de chegar nas rotas.
-const NO_ACCESS_CHECK = new Set(['auth', 'notifications', 'live'])
+const NO_ACCESS_CHECK = new Set(['auth', 'notifications', 'live', 'google-chat'])
 app.use('/api/*', async (c, next) => {
   const resource = c.req.path.split('/')[2]
   if (!resource || NO_ACCESS_CHECK.has(resource)) return await next()
@@ -207,7 +208,7 @@ app.use('/api/*', async (c, next) => {
 // das rotas, então vale pra todas sem precisar mexer em cada uma. Sai em
 // segundo plano (waitUntil), não atrasa a resposta. O X-Client-Id deixa o
 // aparelho que fez a alteração ignorar o próprio aviso (ele já se atualizou).
-const LIVE_SKIP_RESOURCES = new Set(['live', 'auth', 'notifications', 'audit'])
+const LIVE_SKIP_RESOURCES = new Set(['live', 'auth', 'notifications', 'audit', 'google-chat'])
 app.use('/api/*', async (c, next) => {
   await next()
   const method = c.req.method
@@ -233,6 +234,8 @@ app.route('/api/notifications', notificationsRoutes)
 app.route('/api/boards', boardsRoutes)
 app.route('/api/boards/:boardId/columns', columnsRoutes)
 app.route('/api/boards/:boardId/cards', cardsRoutes)
+// Antes do timeEntries (montado em /api com auth em '*'): os eventos do Google Chat não têm login do UniFlow.
+app.route('/api/google-chat', googleChatRoutes)
 app.route('/api', timeEntriesRoutes)
 app.route('/api/admin/sla-rules', slaRulesRoutes)
 app.route('/api/events', eventsRoutes)
