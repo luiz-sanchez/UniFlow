@@ -160,7 +160,7 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   Google Admin (mesmo Client ID do Drive); conversa 1:1 via `spaces:setup` (aceita e-mail), guardada em `google_chat_dms` (desconhecido = 6 h).
   O app "UniFlow" do console (projeto 320230369357) precisa existir pra usar a API; `/api/google-chat/events` só responde quem falar com ele
   (montado ANTES do `timeEntries`, que põe auth em `/api/*`). Tentativa anterior com app (chat.bot) exigia instalar pra cada um — abandonada.
-  Ligar: Admin → Notificações (`gchat_loans_enabled`) + "Enviar teste para mim". Formatação `*negrito*`. Teste: `gchat-e2e.mjs` (grupo MOCK_GMAIL).
+  Ligar: Admin → Notificações (`gchat_loans_enabled`) + "Enviar teste para mim". Formatação `**negrito**` (user auth segue o Markdown do app; `*x*` sai itálico; e-mail entre crases senão vira menção). Teste: `gchat-e2e.mjs` (grupo MOCK_GMAIL).
   Próximo passo possível: resposta no Chat entrar no chat do empréstimo.
 - Desempenho (estrelas/luas — 👎 privado: quem recebeu + Super Admin), Jornada, Organograma, Impressoras (drag-and-drop), Compras por mês,
   Aprovações (trocar decisão), Cofre de Senhas (AES-GCM), **VLANs** (Gestão; senhas de Wi-Fi no banco **cifradas** como o Cofre — `password_enc/iv`, migração 0063; texto puro

@@ -49,7 +49,7 @@ app.post('/test', auth, async c => {
   // teste é sob demanda: não usa o "não achei" guardado
   await db.prepare('DELETE FROM google_chat_dms WHERE email = ? AND space IS NULL').run(me.email.toLowerCase())
   const r = await sendChatToEmail(c.env, db, me.email,
-    `*Teste do UniFlow* ✅\nSe você está lendo isto, os avisos de empréstimo pelo Google Chat estão funcionando${enabled ? '' : ' (ainda desligados no Admin — só este teste saiu)'}.`,
+    `✅ **Teste do UniFlow**\nSe você está lendo isto, os avisos de empréstimo pelo Google Chat estão funcionando${enabled ? '' : ' (ainda desligados no Admin — só este teste saiu)'}.`,
     { force: true })
   if (r.ok) return c.json({ ok: true })
   const error = r.reason === 'no_dm'

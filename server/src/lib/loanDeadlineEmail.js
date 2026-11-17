@@ -11,17 +11,20 @@ const VARIANTS = {
     subject: 'Prazo para devolução de equipamentos – período da manhã (até às 10h)',
     intro: 'Informamos que todos os equipamentos retirados junto à equipe de T.I. no período da manhã (Chromebooks, controles de projetor, caixas de som, entre outros) devem ser devolvidos até às 10h.',
     reason: 'A devolução dentro desse horário é essencial para que possamos conferir, carregar e preparar os equipamentos para o uso dos demais colegas nos períodos seguintes.',
-    chatDeadline: 'até as *10h*',
+    chatDeadline: 'ATÉ AS 10H',
+    chatDeadlineLong: 'devolver hoje até as 10h (período da manhã)',
   },
   noite: {
     subject: 'Prazo para devolução de equipamentos – até às 22h',
     intro: 'Informamos que todos os equipamentos retirados junto à equipe de T.I. (Chromebooks, controles de projetor, caixas de som, entre outros) devem ser devolvidos até às 22h do mesmo dia da retirada.',
     reason: 'A devolução dentro desse horário é essencial para que possamos conferir, carregar e preparar os equipamentos para o uso dos demais colegas no dia seguinte.',
-    chatDeadline: 'até as *22h* de hoje',
+    chatDeadline: 'HOJE ATÉ AS 22H',
+    chatDeadlineLong: 'devolver hoje até as 22h',
   },
 }
 
 export const DEADLINE_PERIODS = Object.keys(VARIANTS)
+const BUILDINGS = { sede: 'SEDE', centro: 'CENTRO', g5: 'G5' }
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -46,7 +49,12 @@ export async function sendLoanQuickMessage(env, db, { to, requesterName, loan, m
   })
   const result = await flushOutbox(env, db)
   // aviso a mais no Google Chat (se a pessoa tem o app); não muda o resultado do e-mail
-  await sendChatToEmail(env, db, to, `*Mensagem da T.I. sobre o seu empréstimo* (${itemLine})\n\n${message}`)
+  await sendChatToEmail(env, db, to, [
+    '📢 **MENSAGEM DA T.I. SOBRE O SEU EMPRÉSTIMO**', '',
+    message, '',
+    `📦 Equipamento: ${itemLine}`,
+    `Dúvidas? Responda o e-mail ou escreva para \`${HELP_EMAIL}\`.`,
+  ].join('\n'))
   const row = await db.prepare('SELECT status, error FROM email_outbox WHERE id = ?').get(outboxId)
   if (row?.status === 'sent') return { ok: true }
   if (!result.provider) return { ok: false, error: 'Nenhum provedor de e-mail configurado.' }
@@ -83,10 +91,15 @@ export async function sendLoanDeadlineEmail(env, db, { to, requesterName, period
 
     await queueEmail(db, { to_email: to, subject: v.subject, html, text, related_type: 'equipment_loan', related_id: loanId, plain: true })
     await flushOutbox(env, db)
+    const place = [BUILDINGS[loans[0]?.building] || loans[0]?.building, loans[0]?.location].filter(Boolean).join(' – ')
     await sendChatToEmail(env, db, to, [
-      `*${itemLines.length === 1 ? 'Equipamento registrado' : 'Equipamentos registrados'} em seu nome*`,
-      ...itemLines.map(i => `- ${i}`), '',
-      `Devolva à equipe de T.I. ${v.chatDeadline}. Precisa ficar mais tempo? Abra um chamado pelo e-mail ${HELP_EMAIL}.`,
+      `⚠️ **AVISO DE EMPRÉSTIMO – DEVOLUÇÃO ${v.chatDeadline}**`, '',
+      `Olá, ${requesterName.split(' ')[0]}! ${itemLines.length === 1 ? 'Este equipamento da T.I. está' : 'Estes equipamentos da T.I. estão'} registrado${itemLines.length === 1 ? '' : 's'} em seu nome:`,
+      ...itemLines.map(i => `- 📦 ${i}`), '',
+      `⏰ **Prazo: ${v.chatDeadlineLong}**`,
+      ...(place ? [`📍 Local: ${place}`] : []), '',
+      'Depois desse horário o equipamento fica em falta para os próximos colegas. ' +
+      `Precisa ficar mais tempo? Abra um chamado **antes do prazo** pelo e-mail \`${HELP_EMAIL}\`.`,
     ].join('\n'))
     return true
   } catch (e) {
