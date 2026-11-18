@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { isTabletDevice } from '../store/tabletModeStore'
 import s from './Auth.module.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
@@ -63,7 +64,7 @@ export default function LoginPage() {
       setGoogleLoading(true)
       setError('')
       actionRef.current.loginWithGoogle(idToken)
-        .then(() => actionRef.current.navigate('/'))
+        .then(() => actionRef.current.navigate(isTabletDevice() ? '/vistorias' : '/'))
         .catch(err => setError(err?.response?.data?.error || 'Não deu para entrar com o Google. Tente de novo.'))
         .finally(() => setGoogleLoading(false))
     }
@@ -114,7 +115,11 @@ export default function LoginPage() {
       <main className={s.formSide}>
         <div className={s.formBox}>
           <h1 className={s.formTitle}>Entrar</h1>
-          <p className={s.formSub}>Use a sua conta Google da instituição.</p>
+          <p className={s.formSub}>
+            {isTabletDevice()
+              ? 'Tablet da vistoria: entre com a sua conta Google. Ao sair, o tablet pede conta e senha de novo.'
+              : 'Use a sua conta Google da instituição.'}
+          </p>
 
           {error && <div role="alert" className={s.error}>{error}</div>}
 

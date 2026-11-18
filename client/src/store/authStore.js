@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import api from '../services/api'
+import { isTabletDevice, signOutGoogle } from './tabletModeStore'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -12,7 +13,10 @@ export const useAuthStore = create((set) => ({
     set({ user: data.user, token: data.token })
   },
 
-  logout: () => {
+  // byUser = a pessoa tocou em "Sair" (não é a sessão que caiu). No tablet da
+  // vistoria isso também desconecta a conta Google do navegador.
+  logout: (byUser = false) => {
+    if (byUser === true && isTabletDevice()) signOutGoogle()
     // Log de auditoria "saiu" — o pedido sai com o token antes de ele ser apagado.
     // Sem token (a sessão já caiu) não há o que registrar: sem este cuidado o 401
     // do próprio "sair" disparava outro "sair", em laço (nov/2026).

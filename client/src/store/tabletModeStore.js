@@ -27,4 +27,19 @@ export function requestFullscreen() {
   el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {})
 }
 
-export const isTabletPath = path => path === '/vistorias' || path.startsWith('/vistorias/')
+// Este aparelho é o tablet da vistoria (modo tablet ligado nele)?
+export const isTabletDevice = read
+
+// Tablet compartilhado: ao sair do UniFlow, sai também da conta Google do
+// navegador — assim o próximo "Entrar com Google" pede e-mail e senha de novo
+// (sem isso o Google entra direto com a última conta). Abre a saída do Google
+// numa janelinha e fecha sozinha. Só funciona a partir de um toque (o navegador
+// bloqueia janela aberta sem toque).
+export function signOutGoogle() {
+  const w = window.open('https://accounts.google.com/Logout', 'google-logout', 'width=480,height=560,left=200,top=100')
+  if (!w) return false
+  setTimeout(() => { try { w.close() } catch { /* já fechou */ } }, 4000)
+  return true
+}
+
+export const isTabletPath =path => path === '/vistorias' || path.startsWith('/vistorias/')
