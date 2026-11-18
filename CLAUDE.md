@@ -191,6 +191,9 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   "Laboratório NN"): dia = Brasília (`date(finished_at,'-3 hours')`, `brDay()` no front). Cartão "Feita hoje às HH:MM" / "Falta hoje",
   faixa "Faltam N hoje" com filtro (padrão "Faltam hoje"), nº na aba do prédio = faltam hoje; Histórico → "Dia a dia" (lab × 14 dias,
   `GET /daily`). Lembrete automático de quem não fez: ainda não existe.
+  **Modo tablet** (botão na tela; `store/tabletModeStore.js`, lembrado no aparelho em `localStorage uniflow-vistoria-tablet`): nas rotas
+  /vistorias o AppLayout some com menu e barra de cima, pede tela cheia (o navegador só deixa num toque → 1º toque na tela reentra) e
+  segura a tela acesa (Wake Lock). Manifesto do PWA tem atalho "Vistoria" (`shortcuts`, segurar o ícone do app instalado).
 - **Impressoras → Estoque de insumos** (`routes/printerSupplies.js`, `PrinterSuppliesPage.jsx`, rota `/estoque-insumos/:location`, módulo
   `printers`, sem separação por departamento — é estoque da TI): catálogo (tipo, cor, código, modelos compatíveis), saldo e mínimo **por
   prédio** em `printer_supply_stock` (não soma o histórico), histórico em `printer_supply_movements` (entrada, troca NA impressora,

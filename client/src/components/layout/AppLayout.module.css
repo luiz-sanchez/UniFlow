@@ -37,3 +37,7 @@
 @media (min-width: 769px) {
   .backdrop { display: none; }
 }
+
+/* Modo tablet da Vistoria: só o conteúdo, de ponta a ponta */
+.tablet { height: 100dvh; }
+.tablet .content { padding-top: env(safe-area-inset-top); }

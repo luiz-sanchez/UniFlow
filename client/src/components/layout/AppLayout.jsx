@@ -7,11 +7,35 @@ import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import { pageTitle } from './GoTo'
 import ConfirmDialogHost from '../common/ConfirmDialogHost'
+import { useTabletMode, isTabletPath, requestFullscreen } from '../../store/tabletModeStore'
 import styles from './AppLayout.module.css'
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  // Modo tablet da Vistoria: sem menu nem barra de cima, tela cheia e tela acesa.
+  const tablet = useTabletMode(s => s.on) && isTabletPath(location.pathname)
+
+  useEffect(() => {
+    if (!tablet) return
+    // o navegador só deixa entrar em tela cheia num toque: o 1º toque na tela
+    // (ao reabrir a aba, ou depois de sair sem querer) volta para a tela cheia
+    const onTouch = () => requestFullscreen()
+    document.addEventListener('pointerdown', onTouch)
+    // tela não apaga no meio da vistoria (onde o navegador permitir)
+    let lock = null
+    const keepAwake = () => {
+      if (document.visibilityState !== 'visible' || !navigator.wakeLock) return
+      navigator.wakeLock.request('screen').then(l => { lock = l }).catch(() => {})
+    }
+    keepAwake()
+    document.addEventListener('visibilitychange', keepAwake)
+    return () => {
+      document.removeEventListener('pointerdown', onTouch)
+      document.removeEventListener('visibilitychange', keepAwake)
+      lock?.release().catch(() => {})
+    }
+  }, [tablet])
 
   // Tempo real: abre a conexão enquanto a pessoa está logada e fecha ao sair
   // (este layout só existe dentro da área logada).
@@ -33,7 +57,7 @@ export default function AppLayout() {
   }, [location.pathname])
 
   return (
-    <div className={styles.layout}>
+    <div className={`${styles.layout} ${tablet ? styles.tablet : ''}`}>
       {/* Primeiro item do Tab: pula o menu (~30 paradas) e vai direto ao conteúdo. */}
       <a
         href="#conteudo"
@@ -42,7 +66,7 @@ export default function AppLayout() {
       >
         Pular para o conteúdo
       </a>
-      <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {!tablet && <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
 
       {/* Backdrop for mobile sidebar */}
       {sidebarOpen && (
@@ -50,7 +74,7 @@ export default function AppLayout() {
       )}
 
       <div className={styles.main}>
-        <Topbar onMenuClick={() => setSidebarOpen(o => !o)} />
+        {!tablet && <Topbar onMenuClick={() => setSidebarOpen(o => !o)} />}
         <main id="conteudo" className={styles.content} tabIndex={-1}>
           {/* key={pathname} remonta esse div a cada navegação, o que
               reinicia a animação de entrada — dá vida a toda troca de

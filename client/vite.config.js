@@ -20,6 +20,11 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         scope: '/',
+        // Segurar o ícone do app instalado (Android) mostra "Vistoria": abre direto
+        // nela, e dá pra arrastar como ícone próprio na tela inicial do tablet.
+        shortcuts: [
+          { name: 'Vistoria de Laboratórios', short_name: 'Vistoria', url: '/vistorias', icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+        ],
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

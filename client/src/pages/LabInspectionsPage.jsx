@@ -8,6 +8,7 @@ import { canEdit } from '../utils/permissions'
 import { alertDialog } from '../store/dialogStore'
 import LineIcon from '../components/common/LineIcon'
 import InspectionSetup from '../components/labInspections/InspectionSetup'
+import { useTabletMode, requestFullscreen } from '../store/tabletModeStore'
 import { BUILDINGS, fmtWhen, agoText, plural, brDay, timeOf, dayParts } from '../utils/labInspections'
 import s from './LabInspections.module.css'
 
@@ -133,6 +134,25 @@ function DailyGrid({ labs, daily }) {
   )
 }
 
+// Modo tablet: some o menu e a barra de cima e o navegador fica em tela cheia
+// (lembrado neste aparelho). Saiu da tela cheia sem querer? Um toque volta.
+function TabletButton() {
+  const { on, enter, exit } = useTabletMode()
+  const [full, setFull] = useState(!!document.fullscreenElement)
+  useEffect(() => {
+    const f = () => setFull(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', f)
+    return () => document.removeEventListener('fullscreenchange', f)
+  }, [])
+  if (!on) return <button className="btn btn-ghost" onClick={enter}><LineIcon name="maximize" /> Modo tablet</button>
+  return (
+    <>
+      {!full && document.documentElement.requestFullscreen && <button className="btn btn-ghost" onClick={requestFullscreen}><LineIcon name="maximize" /> Tela cheia</button>}
+      <button className="btn btn-ghost" onClick={exit}><LineIcon name="minimize" /> Sair do modo tablet</button>
+    </>
+  )
+}
+
 function Recurring({ rows }) {
   if (!rows?.length) return null
   return (
@@ -212,7 +232,10 @@ export default function LabInspectionsPage() {
           <h1 className={s.title}>Vistoria de Laboratórios</h1>
           <p className={s.sub}>{writable ? 'Toque no laboratório para começar. Cada resposta é salva na hora.' : 'Consulte as vistorias feitas pela equipe de TI.'}</p>
         </div>
-        {writable && <button className="btn btn-ghost" onClick={() => setSetup(true)}><LineIcon name="sliders" /> Configurar</button>}
+        <div className={s.headerActions}>
+          <TabletButton />
+          {writable && <button className="btn btn-ghost" onClick={() => setSetup(true)}><LineIcon name="sliders" /> Configurar</button>}
+        </div>
       </header>
 
       <div className={s.tabs} role="tablist" aria-label="Seção">
