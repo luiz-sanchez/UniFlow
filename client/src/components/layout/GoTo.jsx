@@ -23,6 +23,7 @@ const PAGES = [
   ['Aprovações', '/aprovacoes', 'approvals', 'pedir aprovação fluxos'],
   ['Solicitações de compra', '/solicitacoes-compra', 'purchases', 'compras fluxos'],
   ['Incidentes nos laboratórios', '/incidentes-laboratorios', 'incidents', 'defeito fluxos'],
+  ['Vistoria de laboratórios', '/vistorias', 'incidents', 'checklist tablet inspeção fluxos'],
   ['Impressoras', '/impressoras', 'printers', 'ip driver'],
   ['Estoque de insumos', '/estoque-insumos', 'printers', 'toner cilindro tinta impressoras'],
   ['Empréstimos', '/emprestimo-equipamentos', 'loans', 'equipamentos chromebook projetor'],

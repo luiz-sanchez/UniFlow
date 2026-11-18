@@ -21,6 +21,8 @@ const KnowledgeBasePage = lazyPage(() => import('./pages/KnowledgeBasePage'))
 const GestaoPage = lazyPage(() => import('./pages/GestaoPage'))
 const DevelopmentsPage = lazyPage(() => import('./pages/DevelopmentsPage'))
 const LabIncidentsPage = lazyPage(() => import('./pages/LabIncidentsPage'))
+const LabInspectionsPage = lazyPage(() => import('./pages/LabInspectionsPage'))
+const LabInspectionRunPage = lazyPage(() => import('./pages/LabInspectionRunPage'))
 const SuccessCasesPage = lazyPage(() => import('./pages/SuccessCasesPage'))
 const PrinterSuppliesPage = lazyPage(() => import('./pages/PrinterSuppliesPage'))
 const VaultPage = lazyPage(() => import('./pages/VaultPage'))
@@ -111,6 +113,8 @@ export default function App() {
           <Route path="aprovacoes" element={<RequireModule module="approvals"><ApprovalsPage /></RequireModule>} />
           <Route path="incidentes-laboratorios" element={<Navigate to="/incidentes-laboratorios/sede" replace />} />
           <Route path="incidentes-laboratorios/:building" element={<RequireModule module="incidents"><LabIncidentsPage /></RequireModule>} />
+          <Route path="vistorias" element={<RequireModule module="incidents"><LabInspectionsPage /></RequireModule>} />
+          <Route path="vistorias/:id" element={<RequireModule module="incidents"><LabInspectionRunPage /></RequireModule>} />
           <Route path="solicitacoes-compra" element={<Navigate to="/solicitacoes-compra/todos" replace />} />
           <Route path="solicitacoes-compra/:month" element={<RequireModule module="purchases"><PurchaseRequestsPage /></RequireModule>} />
           <Route path="impressoras" element={<Navigate to="/impressoras/sede" replace />} />

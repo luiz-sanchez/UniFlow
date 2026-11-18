@@ -244,7 +244,8 @@ export default function Sidebar({ mobileOpen, onClose }) {
   const [purchaseMonthsOpen, setPurchaseMonthsOpen] = useState(purchaseActive)
   const incidentsActive = location.pathname.startsWith('/incidentes-laboratorios')
   const [incidentsOpen, setIncidentsOpen] = useState(incidentsActive)
-  const flowsActive = FLOWS_PATHS.includes(location.pathname) || purchaseActive || incidentsActive
+  const inspectionsActive = location.pathname.startsWith('/vistorias')
+  const flowsActive = FLOWS_PATHS.includes(location.pathname) || purchaseActive || incidentsActive || inspectionsActive
   const [flowsOpen, setFlowsOpen] = useState(flowsActive)
   const vlansActive = location.pathname.startsWith('/gestao/vlans')
   const [vlansOpen, setVlansOpen] = useState(vlansActive)
@@ -585,6 +586,11 @@ export default function Sidebar({ mobileOpen, onClose }) {
                   </div>
                 )}
               </div>
+              )}
+              {can('incidents') && (
+              <NavLink to="/vistorias" className={() => `${s.navSubItem} ${inspectionsActive ? s.active : ''}`}>
+                <span>Vistoria de Laboratórios</span>
+              </NavLink>
               )}
             </div>
           )}

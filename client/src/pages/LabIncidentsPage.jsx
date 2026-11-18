@@ -370,7 +370,8 @@ export default function LabIncidentsPage() {
   const [categoryFilter, setCategoryFilter] = useUrlState('tipo')
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState(null) // null | {} novo | incidente
-  const [openId, setOpenId] = useState(null)
+  // ?abrir=<id> abre o incidente direto (link da Vistoria de Laboratórios)
+  const [openId, setOpenId] = useState(() => new URLSearchParams(window.location.search).get('abrir'))
   const writable = canEditModule(user, 'incidents')
 
   const load = () => api.get('/lab-incidents', { params: { building } }).then(r => setItems(r.data || [])).catch(() => setItems([]))

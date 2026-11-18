@@ -41,6 +41,7 @@ import inventoryRoutes from './routes/inventory.js'
 import liveRoutes from './routes/live.js'
 import developmentsRoutes from './routes/developments.js'
 import labIncidentsRoutes from './routes/labIncidents.js'
+import labInspectionsRoutes from './routes/labInspections.js'
 import successCasesRoutes from './routes/successCases.js'
 import machineStandardsRoutes from './routes/machineStandards.js'
 import printerSuppliesRoutes from './routes/printerSupplies.js'
@@ -266,6 +267,7 @@ app.route('/api/shifts', shiftsRoutes)
 app.route('/api/inventory', inventoryRoutes)
 app.route('/api/developments', developmentsRoutes)
 app.route('/api/lab-incidents', labIncidentsRoutes)
+app.route('/api/lab-inspections', labInspectionsRoutes)
 app.route('/api/success-cases', successCasesRoutes)
 app.route('/api/machine-standards', machineStandardsRoutes)
 app.route('/api/printer-supplies', printerSuppliesRoutes)

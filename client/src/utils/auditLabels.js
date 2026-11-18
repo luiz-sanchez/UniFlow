@@ -20,7 +20,7 @@ const AREA = {
   'internet-links': 'Links de Internet', 'org-chart': 'Organograma', 'team-kudos': 'Desempenho do Time',
   vlans: 'VLANs', 'equipment-loans': 'Empréstimos', 'equipment-inventory': 'Inventário de empréstimos',
   'room-schedule': 'Grade de salas', directory: 'Diretório', journey: 'Jornada', shifts: 'Escala', inventory: 'Inventário', developments: 'Desenvolvimentos',
-  'lab-incidents': 'Incidentes Laboratórios', 'success-cases': 'Cases de Sucesso',
+  'lab-incidents': 'Incidentes Laboratórios', 'lab-inspections': 'Vistoria de Laboratórios', 'success-cases': 'Cases de Sucesso',
   'machine-standards': 'Padronização de máquinas', 'glpi-backlog': 'Backlog de Chamados',
   'glpi-total': 'Total de Chamados', 'time-entries': 'Tempo da equipe',
 }

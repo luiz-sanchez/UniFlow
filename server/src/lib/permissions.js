@@ -53,6 +53,7 @@ const RESOURCE_MODULE = {
   'success-cases': 'gestao', // Gestão → Cases de Sucesso
   'machine-standards': 'kb', // Base de Conhecimento → Padronização de máquinas
   'lab-incidents': 'incidents',
+  'lab-inspections': 'incidents', // Fluxos → Vistoria de Laboratórios
   approvals: 'approvals',
   'purchase-requests': 'purchases',
   printers: 'printers',

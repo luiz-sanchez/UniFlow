@@ -49,7 +49,7 @@ npx wrangler deploy
 ```
 - Erro **7403** ("conta não autorizada") = wrangler logado na conta errada → `npx wrangler logout`, fechar a sessão
   do Cloudflare no navegador (ou aba anônima) e `npx wrangler login` com a conta certa. Às vezes é passageiro: tentar de novo.
-- Migrações em `migrations/NNNN_*.sql` (hoje até 0071). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
+- Migrações em `migrations/NNNN_*.sql` (hoje até 0072). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
 - Secrets (nunca no código): `JWT_SECRET`, `GLPI_APP_TOKEN`, `GLPI_USER_TOKEN`, `GOOGLE_SA_*`, `VAULT_ENCRYPTION_KEY`, Gmail/Resend etc. Variáveis públicas em `wrangler.jsonc`.
 
 ## Teste local (sem login Google)
@@ -173,6 +173,16 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   situação aberto → em andamento → resolvido (+ solução, quem/quando). Até 10 fotos, reduzidas no navegador (`utils/imageResize.js`) e
   guardadas como data URL em `lab_incident_photos` (miniatura na lista, grande sob demanda — sem `?token=` na URL). Exporta Excel.
   Registra/muda situação: quem tem `incidents=edit`; editar dados/excluir: quem registrou ou Super Admin.
+- **Fluxos → Vistoria de Laboratórios** (18/11/2026, migração 0072; `routes/labInspections.js`, `LabInspectionsPage.jsx` +
+  `LabInspectionRunPage.jsx`, `components/labInspections/InspectionSetup.jsx`, rotas `/vistorias` e `/vistorias/:id`, módulo `incidents`,
+  sem departamento): checklist feito no TABLET (botões ≥ 60 px). Laboratórios (`inspection_labs`: prédio, localização, nº de PCs — os
+  iniciais vieram dos nomes usados nos Incidentes) e itens editáveis (`inspection_items`, 10 iniciais, ícone + tipo de incidente) em
+  "Configurar". Cada toque grava na hora (rascunho `lab_inspections`/`lab_inspection_answers`, resposta guarda o TEXTO do item); um
+  rascunho por pessoa por laboratório (tocar de novo retoma). Não conforme = problema (obrigatório), equipamentos, 1 foto (câmera,
+  reduzida no navegador), "precisa de manutenção" → ao finalizar vira **Incidente Laboratórios** (com a foto; link `?abrir=<id>` abre o
+  incidente). Finalizar tem trava (2 toques não duplicam incidente). Histórico + "Problemas que se repetem" (mesmo item não conforme em
+  2+ vistorias em 90 dias). Rascunho: só quem começou (ou Super Admin) mexe/descarta; finalizada: só Super Admin apaga. Teste: `lab-inspections-e2e.mjs`.
+  Referência pedida pelo Luiz (github ricardomacielalonso/uniflow-labs) deu 404 — feito sem ela.
 - **Impressoras → Estoque de insumos** (`routes/printerSupplies.js`, `PrinterSuppliesPage.jsx`, rota `/estoque-insumos/:location`, módulo
   `printers`, sem separação por departamento — é estoque da TI): catálogo (tipo, cor, código, modelos compatíveis), saldo e mínimo **por
   prédio** em `printer_supply_stock` (não soma o histórico), histórico em `printer_supply_movements` (entrada, troca NA impressora,

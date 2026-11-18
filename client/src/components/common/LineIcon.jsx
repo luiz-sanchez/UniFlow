@@ -44,6 +44,12 @@ const PATHS = {
   pause: <><path d="M9 5v14M15 5v14" /></>,
   play: <><path d="M7 4.5v15l12-7.5-12-7.5Z" /></>,
   check: <><path d="M20 6 9 17l-5-5" /></>,
+  minus: <><path d="M5 12h14" /></>,
+  clipboard: <><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></>,
+  lightbulb: <><path d="M9 18h6M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z" /></>,
+  fan: <><path d="M12 12c-3-5-1-9 2-9s3 4-2 9Z" /><path d="M12 12c5-3 9-1 9 2s-4 3-9-2Z" /><path d="M12 12c3 5 1 9-2 9s-3-4 2-9Z" /><path d="M12 12c-5 3-9 1-9-2s4-3 9 2Z" /></>,
+  keyboard: <><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" /></>,
+  chair: <><path d="M6 3h12v8H6z" /><path d="M5 11h14l-1 4H6Z" /><path d="M7 15v6M17 15v6" /></>,
   send: <><path d="m22 2-7 20-4-9-9-4 20-7Z" /><path d="M22 2 11 13" /></>,
   logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></>,
 }
