@@ -5,6 +5,7 @@ import { isScriptLink, LINK_ERROR } from '../lib/safeUrl.js'
 import { encryptSecret, decryptSecret } from '../lib/vaultCrypto.js'
 import { rateLimit, byUser } from '../lib/rateLimit.js'
 import { writeAudit, checkRevealBurst, auditVaultDenied, auditVaultOpen } from '../lib/audit.js'
+import { accessOf, levelOf } from '../lib/permissions.js'
 
 // Cofre de senhas — acesso (ver e editar) NÃO segue o system_role normal:
 // é uma lista própria (vault_access) que só Super Admin concede/revoga
@@ -23,21 +24,27 @@ async function isSuperAdmin(db, userId) {
   return u?.system_role === 'super_admin'
 }
 
-export async function hasVaultAccess(db, userId) {
-  if (await isSuperAdmin(db, userId)) return true
-  const row = await db.prepare('SELECT 1 FROM vault_access WHERE user_id = ?').get(userId)
-  return !!row
+// Nível no Cofre/VLANs: o cargo (Admin → Cargos) OU a lista pessoal vault_access
+// (que dá "editar"); Super Admin sempre "editar". Ver lib/permissions.js (loadAccess).
+export async function secretLevel(c, module) {
+  return levelOf(await accessOf(c), module)
 }
 
-app.use('*', async (c, next) => {
-  const db = c.get('db')
-  const user = c.get('user')
-  if (!(await hasVaultAccess(db, user.id))) {
-    await auditVaultDenied(c, 'o Cofre de Senhas')
-    return c.json({ error: 'Sem acesso ao Cofre de Senhas. Peça pra um Super Admin te autorizar.' }, 403)
+// Portão do Cofre e das VLANs: sem nível → 403 com log "Crítico"; só "ver" não altera.
+export function secretGate(module, what, deniedMsg) {
+  return async (c, next) => {
+    const level = await secretLevel(c, module)
+    if (level === 'none') {
+      await auditVaultDenied(c, what)
+      return c.json({ error: deniedMsg }, 403)
+    }
+    const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(c.req.method)
+    if (!isRead && level !== 'edit') return c.json({ error: 'Seu cargo só pode consultar esta área (sem alterar).' }, 403)
+    await next()
   }
-  await next()
-})
+}
+
+app.use('*', secretGate('vault', 'o Cofre de Senhas', 'Sem acesso ao Cofre de Senhas. Peça pra um Super Admin liberar no seu cargo.'))
 
 const requireSuperAdmin = async (c, next) => {
   if (!(await isSuperAdmin(c.get('db'), c.get('user').id))) {

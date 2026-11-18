@@ -1,24 +1,18 @@
 import { Hono } from 'hono'
 import { auth } from '../middleware/auth.js'
-import { hasVaultAccess } from './vault.js'
-import { writeAudit, checkRevealBurst, auditVaultDenied, auditVaultOpen } from '../lib/audit.js'
+import { secretGate } from './vault.js'
+import { writeAudit, checkRevealBurst, auditVaultOpen } from '../lib/audit.js'
 import { encryptSecret, decryptSecret } from '../lib/vaultCrypto.js'
 import { rateLimit, byUser } from '../lib/rateLimit.js'
 
 // Segmentação de VLANs (Gestão). Contém as senhas de Wi-Fi, então o acesso
-// segue o MESMO controle do Cofre de Senhas (Super Admin ou lista vault_access).
+// tem módulo próprio nos Cargos ('vlans'); a lista pessoal do Cofre também libera.
 // A senha de cada SSID nunca vai na listagem — só sob demanda em
 // GET /ssids/:id/reveal, quando a pessoa clica em "Mostrar"/"Copiar".
 // Gera log de auditoria como o Cofre (categoria 'vault'): abrir, mostrar/copiar, acesso negado.
 const app = new Hono()
 app.use('*', auth)
-app.use('*', async (c, next) => {
-  if (!(await hasVaultAccess(c.get('db'), c.get('user').id))) {
-    await auditVaultDenied(c, 'a Segmentação de VLANs')
-    return c.json({ error: 'Sem acesso. Peça pra um Super Admin te autorizar (mesmo acesso do Cofre de Senhas).' }, 403)
-  }
-  await next()
-})
+app.use('*', secretGate('vlans', 'a Segmentação de VLANs', 'Sem acesso às VLANs. Peça pra um Super Admin liberar no seu cargo.'))
 
 const SITES = ['matriz', 'administrativo']
 

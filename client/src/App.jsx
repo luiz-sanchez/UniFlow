@@ -104,12 +104,12 @@ export default function App() {
           <Route path="base-conhecimento" element={<RequireModule module="kb"><KnowledgeBasePage /></RequireModule>} />
           <Route path="gestao" element={<Navigate to="/gestao/documentos" replace />} />
           <Route path="gestao/documentos" element={<RequireModule module="gestao"><GestaoPage /></RequireModule>} />
-          <Route path="gestao/cofre-senhas" element={<VaultPage />} />
+          <Route path="gestao/cofre-senhas" element={<RequireModule module="vault"><VaultPage /></RequireModule>} />
           <Route path="gestao/desenvolvimentos" element={<RequireModule module="gestao"><DevelopmentsPage /></RequireModule>} />
           <Route path="gestao/desenvolvimentos/:id" element={<RequireModule module="gestao"><DevelopmentsPage /></RequireModule>} />
           <Route path="gestao/cases-de-sucesso" element={<RequireModule module="gestao"><SuccessCasesPage /></RequireModule>} />
           <Route path="gestao/vlans" element={<Navigate to="/gestao/vlans/matriz" replace />} />
-          <Route path="gestao/vlans/:site" element={<VlansPage />} />
+          <Route path="gestao/vlans/:site" element={<RequireModule module="vlans"><VlansPage /></RequireModule>} />
           <Route path="aprovacoes" element={<RequireModule module="approvals"><ApprovalsPage /></RequireModule>} />
           <Route path="incidentes-laboratorios" element={<Navigate to="/incidentes-laboratorios/sede" replace />} />
           <Route path="incidentes-laboratorios/:building" element={<RequireModule module="incidents"><LabIncidentsPage /></RequireModule>} />

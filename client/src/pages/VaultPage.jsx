@@ -11,6 +11,7 @@ import RowMenu from '../components/common/RowMenu'
 import SecretField from '../components/common/SecretField'
 import s from './VaultPage.module.css'
 import { safeHref } from '../utils/safeHref'
+import { canEdit } from '../utils/permissions'
 
 function timeAgo(iso) {
   if (!iso) return null
@@ -137,7 +138,7 @@ function AccessModal({ onClose }) {
   return (
     <Modal title="Quem tem acesso ao cofre" onClose={onClose} width={440}>
       <p className={s.modalLead}>
-        Super Admin sempre tem acesso. As pessoas abaixo foram autorizadas além disso; cada senha que elas veem fica no histórico.
+        Super Admin sempre tem acesso, e o cargo também pode liberar (Admin → Cargos → Cofre de Senhas). As pessoas abaixo foram autorizadas uma a uma, com acesso para editar o Cofre e ver as VLANs; cada senha vista fica no histórico.
       </p>
       {list === null ? (
         <p className={s.hint}>Carregando…</p>
@@ -170,7 +171,7 @@ function AccessModal({ onClose }) {
   )
 }
 
-function EntryRow({ entry, onEdit, onDelete }) {
+function EntryRow({ entry, onEdit, onDelete, editable }) {
   const fetchSecret = async purpose => (await api.get(`/vault/${entry.id}/reveal`, { params: { purpose } })).data.password
   return (
     <li className={s.row}>
@@ -187,10 +188,10 @@ function EntryRow({ entry, onEdit, onDelete }) {
           ? <a className={s.iconLink} href={safeHref(entry.url)} target="_blank" rel="noreferrer" aria-label={`Abrir o link de ${entry.title}`} title="Abrir link"><LineIcon name="link" size={15} /></a>
           : <span className={s.iconLink} aria-hidden="true" />}
         <span className={s.updated} title={`Atualizado por ${entry.author_name || 'alguém'}`}>{timeAgo(entry.updated_at)}</span>
-        <RowMenu name={entry.title} items={[
+        {editable ? <RowMenu name={entry.title} items={[
           { label: 'Editar item', hint: 'A senha só muda se você digitar outra', icon: 'edit', onClick: () => onEdit(entry) },
           { label: 'Excluir item', icon: 'trash', danger: true, onClick: () => onDelete(entry) },
-        ]} />
+        ]} /> : <span className={s.iconLink} aria-hidden="true" />}
       </span>
     </li>
   )
@@ -205,6 +206,7 @@ export default function VaultPage() {
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState(null) // null = fechado, {} = novo, item = editar
   const [showAccess, setShowAccess] = useState(false)
+  const editable = canEdit(user, 'vault') // cargo só com "ver": consulta e copia, não cadastra
 
   useLiveRefresh(['vault'], () => load())
   const load = () => {
@@ -297,7 +299,7 @@ export default function VaultPage() {
               <button className="btn btn-ghost" onClick={() => setShowAccess(true)}><LineIcon name="key" size={15} /> Quem tem acesso</button>
             </>
           )}
-          <button className="btn btn-primary" onClick={() => setEditing({})}><LineIcon name="plus" size={15} /> Novo item</button>
+          {editable && <button className="btn btn-primary" onClick={() => setEditing({})}><LineIcon name="plus" size={15} /> Novo item</button>}
         </div>
       </div>
 
@@ -326,7 +328,7 @@ export default function VaultPage() {
             <section key={cat} className={s.group} aria-label={cat}>
               <h2 className={s.groupTitle}>{cat}<span className={s.groupCount}>{list.length}</span></h2>
               <ul className={s.list}>
-                {list.map(entry => <EntryRow key={entry.id} entry={entry} onEdit={setEditing} onDelete={deleteEntry} />)}
+                {list.map(entry => <EntryRow key={entry.id} entry={entry} onEdit={setEditing} onDelete={deleteEntry} editable={editable} />)}
               </ul>
             </section>
           ))}

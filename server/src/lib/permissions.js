@@ -28,13 +28,19 @@ export const MODULES = [
   { key: 'incidents', label: 'Incidentes Laboratórios', hint: 'Defeitos, sinistros e ocorrências nos laboratórios' },
   { key: 'inventory', label: 'Inventário', hint: 'Controles de patrimônio (Brain...)' },
   { key: 'teacher', label: 'Portal do Professor', hint: 'Pedir Chromebooks e abrir chamados (cargo Professor)' },
+  // Cofre e VLANs: o cargo libera; a lista pessoal (Cofre → "Quem tem acesso")
+  // continua valendo e dá "editar" nos dois. Auditor não vê (só pela lista).
+  { key: 'vault', label: 'Cofre de Senhas', hint: 'Ver = consultar e copiar senhas; Editar = cadastrar, mudar e excluir' },
+  { key: 'vlans', label: 'VLANs', hint: 'Segmentação de rede e senhas do Wi-Fi' },
 ]
+// Módulos com senha: fora do "lê tudo" do Auditor.
+const SECRET_MODULES = ['vault', 'vlans']
 export const MODULE_KEYS = MODULES.map(m => m.key)
 export const LEVELS = ['none', 'view', 'edit']
 
 // Primeiro pedaço do caminho (/api/<recurso>/...) → módulo. Recursos que não
 // aparecem aqui NÃO são controlados por cargo: auth, notifications, live, users
-// (busca de pessoas), vault e vlans (têm lista própria de acesso) e admin (só
+// (busca de pessoas), vault e vlans (o portão fica na rota: cargo OU lista pessoal) e admin (só
 // Super Admin, tratado nas próprias rotas).
 const RESOURCE_MODULE = {
   boards: 'boards',
@@ -94,7 +100,8 @@ export async function loadAccess(db, userId) {
   const u = await db.prepare(`
     SELECT u.id, u.system_role, u.department_id, u.role_id, u.token_version,
            r.name AS role_name, r.scope AS role_scope, r.permissions AS role_permissions,
-           d.module_limits AS dept_limits
+           d.module_limits AS dept_limits,
+           EXISTS (SELECT 1 FROM vault_access va WHERE va.user_id = u.id) AS vault_list
     FROM users u
     LEFT JOIN roles r ON r.id = COALESCE(u.role_id, 'role-colaborador')
     LEFT JOIN departments d ON d.id = u.department_id
@@ -110,8 +117,11 @@ export async function loadAccess(db, userId) {
   }
   // Auditor: lê tudo de todos; a única escrita é a Base de Conhecimento (a trava
   // de escrita de verdade é o middleware global em worker.js).
+  // Lista pessoal do Cofre (Super Admin dá pessoa por pessoa): vale mais que cargo e departamento.
+  const listGrant = u.vault_list ? Object.fromEntries(SECRET_MODULES.map(k => [k, 'edit'])) : {}
   if (u.system_role === 'auditor') {
-    return { ...base, roleName: u.role_name || 'Auditor', scope: 'all', permissions: { ...allLevels('view'), kb: 'edit' } }
+    const secrets = Object.fromEntries(SECRET_MODULES.map(k => [k, 'none']))
+    return { ...base, roleName: u.role_name || 'Auditor', scope: 'all', permissions: { ...allLevels('view'), kb: 'edit', ...secrets, ...listGrant } }
   }
 
   let stored = {}
@@ -125,6 +135,7 @@ export async function loadAccess(db, userId) {
   for (const k of MODULE_KEYS) {
     if (LEVELS.includes(limits[k]) && LEVELS.indexOf(limits[k]) < LEVELS.indexOf(permissions[k])) permissions[k] = limits[k]
   }
+  Object.assign(permissions, listGrant)
   return { ...base, roleName: u.role_name || 'Colaborador', scope: u.role_scope === 'all' ? 'all' : 'department', permissions }
 }
 

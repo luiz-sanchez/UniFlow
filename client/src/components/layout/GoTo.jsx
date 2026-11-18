@@ -36,7 +36,7 @@ const PAGES = [
   ['Documentos de gestão', '/gestao/documentos', 'gestao', 'contratos relatórios'],
   ['Desenvolvimentos', '/gestao/desenvolvimentos', 'gestao', 'sistemas'],
   ['Cofre de Senhas', '/gestao/cofre-senhas', 'vault', 'senhas'],
-  ['VLANs', '/gestao/vlans', 'vault', 'wi-fi rede senhas'],
+  ['VLANs', '/gestao/vlans', 'vlans', 'wi-fi rede senhas'],
   ['Administração', '/admin', 'admin', 'usuários cargos departamentos logs'],
 ]
 // Título da aba do navegador ("Escala · UniFlow"): a tela cujo caminho mais
@@ -68,7 +68,6 @@ export default function GoTo() {
   const allowed = ([, , mod]) => {
     if (!mod) return true
     if (mod === 'admin') return user?.system_role === 'super_admin'
-    if (mod === 'vault') return user?.system_role === 'super_admin' || !!user?.has_vault_access
     return canView(user, mod)
   }
   // quadros só são buscados quando alguém abre o campo (nada de chamada à toa)

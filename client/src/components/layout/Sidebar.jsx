@@ -734,12 +734,12 @@ export default function Sidebar({ mobileOpen, onClose }) {
           )}
           </>
           )}
-          {(can('gestao') || user?.system_role === 'super_admin' || user?.has_vault_access) && (
+          {(can('gestao') || can('vault') || can('vlans')) && (
           <>
           <button
             type="button"
             className={`${s.navGroupHeader} ${gestaoActive ? s.active : ''}`}
-            onClick={() => showLabels ? setGestaoOpen(o => !o) : navigate('/gestao/documentos')}
+            onClick={() => showLabels ? setGestaoOpen(o => !o) : navigate(can('gestao') ? '/gestao/documentos' : can('vault') ? '/gestao/cofre-senhas' : '/gestao/vlans')}
             aria-expanded={showLabels ? gestaoOpen : undefined}
             aria-label={showLabels ? undefined : 'Gestão'}
           >
@@ -763,13 +763,12 @@ export default function Sidebar({ mobileOpen, onClose }) {
                 <span>Documentos</span>
               </NavLink>
               )}
-              {(user?.system_role === 'super_admin' || user?.has_vault_access) && (
+              {can('vault') && (
                 <NavLink to="/gestao/cofre-senhas" className={({ isActive }) => `${s.navSubItem} ${isActive ? s.active : ''}`}>
                   <span>Cofre de Senhas</span>
                 </NavLink>
               )}
-              {/* Tem senhas de Wi-Fi → mesmo controle de acesso do Cofre */}
-              {(user?.system_role === 'super_admin' || user?.has_vault_access) && (
+              {can('vlans') && (
                 <div className={s.navSubGroup}>
                   <button
                     type="button"

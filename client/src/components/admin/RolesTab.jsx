@@ -186,7 +186,7 @@ export default function RolesTab({ roles, modules, setRoles, defaultRoleId, setD
               </li>
             ))}
           </ul>
-          <p className={s.footNote}>Cofre de Senhas e VLANs têm lista própria de acesso (o Super Admin libera pessoa por pessoa). Administração é só do Super Admin.</p>
+          <p className={s.footNote}>Cofre de Senhas e VLANs também podem ser liberados pessoa por pessoa no próprio Cofre ("Quem tem acesso"). Administração é só do Super Admin, e o Auditor nunca vê senhas.</p>
 
           {msg && <p role={msg.type === 'success' ? 'status' : 'alert'} className={`${s.msg} ${msg.type === 'success' ? s.ok : s.err}`}>{msg.text}</p>}
 

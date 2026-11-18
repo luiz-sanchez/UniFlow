@@ -178,15 +178,6 @@ app.get('/me', auth, async c => {
     return c.json({ error: 'Sessão renovada — faça login novamente.' }, 401)
   }
 
-  // Pro Sidebar decidir se mostra o link do Cofre de Senhas (acesso não
-  // segue o system_role normal — ver server/src/routes/vault.js).
-  if (user.system_role === 'super_admin') {
-    user.has_vault_access = true
-  } else {
-    const grant = await db.prepare('SELECT 1 FROM vault_access WHERE user_id = ?').get(user.id)
-    user.has_vault_access = !!grant
-  }
-
   // Cargo, permissões por módulo e escopo (todos os departamentos ou só o dele) —
   // o front usa isso pra esconder menus/botões. A regra de verdade é aplicada
   // no servidor (worker.js); isto é só pra interface não mostrar o que não vale.
@@ -195,6 +186,7 @@ app.get('/me', auth, async c => {
   user.role_name = access.roleName
   user.permissions = access.permissions
   user.scope = access.scope
+  user.has_vault_access = access.permissions.vault !== 'none' // abas antigas ainda leem isto
 
   return c.json(user)
 })

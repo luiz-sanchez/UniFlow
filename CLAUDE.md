@@ -110,7 +110,7 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
 ## Permissões (cargos × departamentos) — decisões do Luiz
 - **Cargos configuráveis** (tabela `roles`, Admin → aba Cargos): por módulo `none|view|edit` + escopo `all|department`.
   Módulos em `server/src/lib/permissions.js` (`MODULES`): boards, agenda, metrics, team, tickets, kb, gestao, approvals,
-  purchases, printers, loans, companies, incidents, teacher, inventory. **Módulo novo = migração que dá o nível dele aos cargos existentes**
+  purchases, printers, loans, companies, incidents, teacher, inventory, **vault, vlans**. **Cofre e VLANs pelo cargo** (18/11/2026, pedido do Luiz: "configurar os cargos a enxergar todas as telas"): portão na própria rota (`secretGate` em `routes/vault.js`, fora do `RESOURCE_MODULE`); ver = consultar/copiar senha, editar = cadastrar; a lista pessoal `vault_access` continua e dá "editar" nos dois (vence o teto do departamento, `EXISTS` no `loadAccess`); Auditor = none (só pela lista); Admin continua só Super Admin. Teste: `secret-roles-e2e.mjs`. **Módulo novo = migração que dá o nível dele aos cargos existentes**
   (`json_set` em `roles.permissions`, ver 0054) — sem isso ninguém além do Super Admin enxerga. Cargos iniciais: Super Admin, Gestor, Analista, Colaborador, Auditor.
   Quem já existia virou Analista (mesmo acesso de antes); **quem entra novo recebe o cargo padrão** (Admin → Cargos → 🚪
   "Tornar este o cargo padrão"; `app_settings.default_role_id`, nunca Super Admin/Auditor; gravado em `users.role_id` no 1º login
@@ -122,7 +122,7 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   sempre valem mais que a tabela (ninguém se tranca fora). Nunca deixar o sistema sem Super Admin.
 - **Departamentos separam o conteúdo** (`department_id` nas tabelas; NULL = "Geral", todos veem). Uma pessoa = um departamento, independentes.
   Helpers em `permissions.js`: `accessOf`, `departmentFilter`, `departmentForCreate/Update`, `canSeeDepartment`, `canModifyDepartment`.
-  Fora da separação (de propósito): quadros/cartões (dono+membros), aprovações (participantes), Cofre/VLANs (lista própria `vault_access`).
+  Fora da separação (de propósito): quadros/cartões (dono+membros), aprovações (participantes), Cofre/VLANs (cargo ou lista própria `vault_access`).
   Compras: participante (quem pediu/aprovador) sempre enxerga. Time (Desempenho/Jornada): departamento vem da pessoa.
 - Quem tem escopo `all` usa **"Ver como departamento"** (Topbar → header `X-Department-View`): só estreita listas, nunca amplia acesso.
 - **Busca por entidade** (09/11/2026): Backlog e Total baixam só as entidades configuradas nos departamentos (`changeActiveEntities`
