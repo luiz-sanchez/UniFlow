@@ -77,17 +77,18 @@ async function gmailGet(token, path) {
 async function listCandidates(env) {
   const path = `/messages?maxResults=25&q=${encodeURIComponent(SEARCH)}`
   const errors = []
-  if (env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REFRESH_TOKEN) {
-    try {
-      const token = await getGmailAccessToken(env)
-      return { token, auth: 'oauth', messages: (await gmailGet(token, path)).messages || [] }
-    } catch (e) { errors.push(`oauth: ${e.message}`) } // 403 = token só tem escopo de envio → tenta a Service Account
-  }
+  // Conta de serviço primeiro (não expira); o token OAuth antigo é o plano B.
   if (env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_PRIVATE_KEY) {
     try {
       const token = await serviceAccountToken(env)
       return { token, auth: 'service_account', messages: (await gmailGet(token, path)).messages || [] }
     } catch (e) { errors.push(`service_account: ${e.message}`) }
+  }
+  if (env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REFRESH_TOKEN) {
+    try {
+      const token = await getGmailAccessToken(env)
+      return { token, auth: 'oauth', messages: (await gmailGet(token, path)).messages || [] }
+    } catch (e) { errors.push(`oauth: ${e.message}`) }
   }
   throw new Error(errors.join(' | ') || 'Nenhuma credencial do Google configurada')
 }

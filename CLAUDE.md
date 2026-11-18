@@ -35,6 +35,10 @@ importante mudar. Documentação técnica longa: `docs/` (comece por
   antigos depois de uns dias). O subdomínio `serfecaf` passou para a conta nova, então o endereço continua o mesmo. Google (login OAuth `…4ur5v531…`,
   Gmail `…nj8kr804…`, conta de serviço) no projeto 320230369357 da helpdesk.ti; página `/privacidade` exigida pelo Google. **Chave do Cofre nova**
   (a antiga nunca foi guardada fora do Worker) — cópia em `Documentos\UniFlow-backups\VAULT_ENCRYPTION_KEY-nova.txt`; GUARDAR num cofre.
+  **E-mail parado 04–18/11/2026**: o token OAuth do Gmail (GMAIL_REFRESH_TOKEN) parou de valer na migração e o `flushOutbox`
+  desistia SEM marcar erro → ~230 e-mails "Na fila" por 2 semanas sem ninguém ver (0073 os expirou, decisão do Luiz). Agora o envio usa a
+  **conta de serviço com `gmail.send`** (delegação no Google Admin, mesmo Client ID do Chat/Drive) e o OAuth é plano B; falha fica no
+  `error` da fila, em `app_settings.email_send_status` e vira aviso no sininho dos Super Admins (1/dia). Teste: `email-send-e2e.mjs`.
   Importar backup no D1: linhas > ~100 KB dão SQLITE_TOOBIG → dividir em INSERT com '' + `UPDATE col = col || 'pedaço'`.
   `wrangler login` com o navegador na conta errada: autorizar em ~2 min (senão expira) ou usar janela anônima.
 
@@ -49,7 +53,7 @@ npx wrangler deploy
 ```
 - Erro **7403** ("conta não autorizada") = wrangler logado na conta errada → `npx wrangler logout`, fechar a sessão
   do Cloudflare no navegador (ou aba anônima) e `npx wrangler login` com a conta certa. Às vezes é passageiro: tentar de novo.
-- Migrações em `migrations/NNNN_*.sql` (hoje até 0072). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
+- Migrações em `migrations/NNNN_*.sql` (hoje até 0073). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
 - Secrets (nunca no código): `JWT_SECRET`, `GLPI_APP_TOKEN`, `GLPI_USER_TOKEN`, `GOOGLE_SA_*`, `VAULT_ENCRYPTION_KEY`, Gmail/Resend etc. Variáveis públicas em `wrangler.jsonc`.
 
 ## Teste local (sem login Google)

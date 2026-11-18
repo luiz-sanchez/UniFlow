@@ -12,6 +12,8 @@
 // Se nenhum estiver configurado, fica tudo 'pending' sem erro — nenhum outro
 // código precisa mudar quando um provedor for configurado/trocado.
 import { v4 as uuid } from 'uuid'
+import { SignJWT, importPKCS8 } from 'jose'
+import { createNotification } from '../routes/notifications.js'
 
 const APP_URL = 'https://uniflow.serfecaf.workers.dev'
 
@@ -182,8 +184,67 @@ async function sendViaGmail(env, { to, subject, html, text }, accessToken) {
   return await res.json().catch(() => ({}))
 }
 
+// Envio pelo Gmail: (1) conta de serviço com delegação (escopo gmail.send no
+// Google Admin, mesmo Client ID do Chat/Drive) — não expira; (2) o token OAuth
+// antigo (GMAIL_REFRESH_TOKEN) como plano B. Em nov/2026 o token OAuth parou de
+// valer na troca de conta e ~230 e-mails ficaram presos na fila sem ninguém ver.
+const SEND_SCOPE = 'https://www.googleapis.com/auth/gmail.send'
+const saConfigured = env => !!(env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_PRIVATE_KEY)
+const oauthConfigured = env => !!(env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REFRESH_TOKEN)
+
+async function serviceAccountSendToken(env) {
+  // o secret guarda a chave com "\n" escrito (barra + n)
+  const pem = env.GOOGLE_SA_PRIVATE_KEY.includes('\\n') ? env.GOOGLE_SA_PRIVATE_KEY.replace(/\\n/g, '\n') : env.GOOGLE_SA_PRIVATE_KEY
+  const key = await importPKCS8(pem, 'RS256')
+  const now = Math.floor(Date.now() / 1000)
+  const assertion = await new SignJWT({ scope: SEND_SCOPE })
+    .setProtectedHeader({ alg: 'RS256' })
+    .setIssuer(env.GOOGLE_SA_EMAIL)
+    .setSubject(env.GMAIL_SENDER_EMAIL || 'helpdesk.ti@fecaf.com.br')
+    .setAudience('https://oauth2.googleapis.com/token')
+    .setIssuedAt(now).setExpirationTime(now + 3600)
+    .sign(key)
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }),
+  })
+  if (!res.ok) throw new Error(`conta de serviço (gmail.send) respondeu ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`)
+  return (await res.json()).access_token
+}
+
+// Token pra enviar: tenta a conta de serviço e depois o OAuth antigo.
+async function getSendToken(env) {
+  const errors = []
+  if (saConfigured(env)) {
+    try { return await serviceAccountSendToken(env) } catch (e) { errors.push(e.message) }
+  }
+  if (oauthConfigured(env)) {
+    try { return await getGmailAccessToken(env) } catch (e) { errors.push(e.message) }
+  }
+  throw new Error(errors.join(' | '))
+}
+
+// Situação do envio em app_settings.email_send_status; se travar, avisa os
+// Super Admins no sininho (1 vez por dia).
+async function recordSendStatus(db, status) {
+  const value = JSON.stringify({ at: new Date().toISOString(), ...status })
+  await db.prepare("INSERT INTO app_settings (key, value) VALUES ('email_send_status', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(value)
+  if (status.ok) return
+  const today = new Date().toISOString().slice(0, 10)
+  if ((await db.prepare("SELECT value FROM app_settings WHERE key = 'email_send_alert_at'").get())?.value === today) return
+  await db.prepare("INSERT INTO app_settings (key, value) VALUES ('email_send_alert_at', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(today)
+  const admins = await db.prepare("SELECT id FROM users WHERE system_role = 'super_admin'").all()
+  const scopeHint = /unauthorized_client/.test(status.error || '') ? ' Falta autorizar o escopo gmail.send na delegação do Google Admin.' : ''
+  for (const a of admins) {
+    await createNotification(db, a.id, 'system', '⚠️ E-mails do UniFlow não estão saindo',
+      `O Google recusou o envio e os e-mails estão parando na fila.${scopeHint} Detalhe: ${String(status.error || '').slice(0, 300)}`,
+      '/admin?tab=notifications')
+  }
+}
+
 function pickProvider(env) {
-  if (env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REFRESH_TOKEN) return 'gmail'
+  if (saConfigured(env) || oauthConfigured(env)) return 'gmail'
   if (env.EMAIL) return 'cloudflare'
   if (env.RESEND_API_KEY) return 'resend'
   return null
@@ -193,17 +254,21 @@ export async function flushOutbox(env, db) {
   const provider = pickProvider(env)
   if (!provider) return { provider: null, attempted: 0 }
 
-  const pending = await db.prepare("SELECT * FROM email_outbox WHERE status = 'pending' ORDER BY created_at LIMIT 50").all()
+  const pending = await db.prepare("SELECT * FROM email_outbox WHERE status = 'pending' ORDER BY created_at LIMIT 15").all()
   let sent = 0, failed = 0
 
   // Um único access token do Gmail serve pra todos os envios deste flush
   // (evita bater no endpoint OAuth uma vez por e-mail).
   let gmailAccessToken = null
-  if (provider === 'gmail') {
+  if (provider === 'gmail' && pending.length) {
     try {
-      gmailAccessToken = await getGmailAccessToken(env)
+      gmailAccessToken = await getSendToken(env)
     } catch (e) {
-      return { provider, attempted: pending.length, sent: 0, failed: pending.length, error: String(e?.message || e) }
+      // continua na fila (o próximo flush tenta de novo), mas com o motivo à vista
+      const error = String(e?.message || e)
+      await db.prepare("UPDATE email_outbox SET error = ? WHERE status = 'pending'").run(`Ainda não enviado: ${error.slice(0, 400)}`)
+      await recordSendStatus(db, { ok: false, error })
+      return { provider, attempted: pending.length, sent: 0, failed: pending.length, error }
     }
   }
 
@@ -234,5 +299,6 @@ export async function flushOutbox(env, db) {
     }
   }
 
+  if (provider === 'gmail' && pending.length) await recordSendStatus(db, { ok: failed === 0 || sent > 0, sent, failed, ...(failed && !sent ? { error: 'Todos os envios desta rodada falharam' } : {}) })
   return { provider, attempted: pending.length, sent, failed }
 }

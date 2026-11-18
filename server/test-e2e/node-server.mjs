@@ -96,13 +96,13 @@ if (process.env.RATE_LIMIT) {
 // (só existem neste servidor de teste):
 //   POST /__mock/gmail/inbox  {id, threadId, from, subject, text?, html?}  → põe na caixa
 //   GET  /__mock/gmail/sent                                               → enviados
-//   POST /__mock/gmail/mode   {oauthCanRead}                              → token OAuth só de envio?
+//   POST /__mock/gmail/mode   {oauthCanRead, oauthBroken, saSendDenied}   → falhas do Google de propósito
 //   POST /__mock/cron         {cron, minute}                              → roda o scheduled()
 //   GET  /__mock/setting?key=  ·  POST /__mock/setting {key, value}       → lê / grava app_settings
 //   POST /__mock/sql          {sql, args?}                               → roda SQL e devolve as linhas
 //   POST /__mock/gchat/dms {email: space}  ·  GET /__mock/gchat/sent       → Google Chat
 //   POST /__mock/gchat-token {aud}                                       → token de evento do Chat
-const mock = { sent: [], inbox: [], oauthCanRead: true, chatDms: {}, chatSent: [], chatLookups: 0 }
+const mock = { sent: [], inbox: [], oauthCanRead: true, oauthBroken: false, saSendDenied: false, chatDms: {}, chatSent: [], chatLookups: 0 }
 if (process.env.MOCK_GMAIL) {
   const { generateKeyPairSync } = await import('node:crypto')
   Object.assign(env, {
@@ -118,7 +118,13 @@ if (process.env.MOCK_GMAIL) {
     const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url)
     if (url.host === 'oauth2.googleapis.com') {
       const body = new URLSearchParams(String(init.body || ''))
-      return json({ access_token: body.get('grant_type') === 'refresh_token' ? 'oauth-token' : 'sa-token' })
+      // modos: oauthBroken = refresh token revogado (como em nov/2026); saSendDenied = gmail.send não autorizado no Admin
+      if (body.get('grant_type') === 'refresh_token') {
+        return mock.oauthBroken ? json({ error: 'invalid_grant', error_description: 'Token has been expired or revoked.' }, 400) : json({ access_token: 'oauth-token' })
+      }
+      const scope = JSON.parse(Buffer.from(body.get('assertion').split('.')[1], 'base64url').toString()).scope || ''
+      if (mock.saSendDenied && scope.includes('gmail.send')) return json({ error: 'unauthorized_client', error_description: 'Client is unauthorized to retrieve access tokens using this method.' }, 401)
+      return json({ access_token: scope.includes('gmail.send') ? 'sa-send-token' : 'sa-token' })
     }
     // Google Chat de mentira: mock.chatDms = { email: 'spaces/X' } (quem "adicionou o app")
     // Diretório de mentira: todo e-mail existe, com id "id-<email>"
@@ -151,7 +157,7 @@ if (process.env.MOCK_GMAIL) {
     if (url.pathname.endsWith('/messages/send')) {
       const raw = Buffer.from(JSON.parse(init.body).raw, 'base64url').toString('utf8')
       const n = mock.sent.length + 1
-      mock.sent.push({ raw, threadId: `t-${n}` })
+      mock.sent.push({ raw, threadId: `t-${n}`, token })
       return json({ id: `sent-${n}`, threadId: `t-${n}` })
     }
     if (token === 'oauth-token' && !mock.oauthCanRead) return json({ error: { code: 403, message: 'Request had insufficient authentication scopes.' } }, 403)
