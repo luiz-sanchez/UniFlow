@@ -110,5 +110,18 @@ expect('Analista descarta o próprio rascunho', (await call('ti', 'DELETE', `${P
 expect('Analista não apaga vistoria finalizada', (await call('ti', 'DELETE', `${P}/${second.id}`)).s, 403)
 expect('Super Admin apaga', (await call('admin', 'DELETE', `${P}/${second.id}`)).s, 200)
 
+// ── Log de auditoria claro (Admin → Logs) ────────────────────────────────
+await new Promise(res => setTimeout(res, 300)) // o log grava em segundo plano
+const logRows = ((await call('admin', 'GET', '/api/audit?limit=500')).j?.rows || []).filter(l => l.path?.startsWith(P))
+const fin = logRows.find(l => l.action === 'vistoria.finish' && l.target_id === insp.id)
+expect('log: finalizou com o laboratório e o técnico', `${fin?.target_label}|${fin?.user_id}`, `${lab.name} (SEDE)|d-ti-ana`)
+expect('log: finalizou traz os problemas', JSON.parse(fin?.details || '{}').problemas > 0, true)
+expect('log: começou', logRows.some(l => l.action === 'vistoria.start' && l.target_id === insp.id), true)
+expect('log: descartou', logRows.some(l => l.action === 'vistoria.discard' && l.target_id === draft.id), true)
+const del = logRows.find(l => l.action === 'vistoria.delete' && l.target_id === second.id)
+expect('log: apagou (atenção) com quem tinha feito', `${del?.severity}|${JSON.parse(del?.details || '{}').tecnico}`, 'warning|d-ti-ana')
+expect('log: cada toque NÃO vira linha', logRows.filter(l => l.path.includes('/answers/') && l.status === 200).length, 0)
+expect('log: apagar sem permissão continua registrado', logRows.some(l => l.action === 'lab-inspections.delete' && l.status === 403), true)
+
 console.log(ok ? '\nTUDO OK' : '\nHOUVE FALHAS')
 process.exit(ok ? 0 : 1)

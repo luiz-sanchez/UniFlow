@@ -1,3 +1,4 @@
+import { auditInBackground } from '../lib/audit.js'
 import { Hono } from 'hono'
 import { v4 as uuid } from 'uuid'
 import { auth } from '../middleware/auth.js'
@@ -26,6 +27,19 @@ const str = (v, max) => {
 const isSuper = async c => (await accessOf(c)).systemRole === 'super_admin'
 // Data e hora de Brasília no formato dos incidentes ('YYYY-MM-DDTHH:MM')
 const nowBrasilia = () => new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 16)
+
+// Log de auditoria (Admin → Logs) com o que importa: quem começou, finalizou,
+// descartou ou apagou a vistoria de QUAL laboratório e o resultado. O log
+// genérico do worker.js (uma linha por toque, só com um código) é desligado
+// nas rotas da vistoria em si (`auditDone`); cadastro de laboratórios/itens
+// continua no log genérico.
+const BUILDING_NAME = { sede: 'SEDE', centro: 'CENTRO', g5: 'G5' }
+const labLabel = r => `${r.lab_name} (${BUILDING_NAME[r.building] || r.building})`
+function auditInspection(c, action, row, details, severity) {
+  c.set('auditDone', true)
+  if (!action) return
+  auditInBackground(c, { category: 'change', action: `vistoria.${action}`, severity, status: 200, targetId: row.id, targetLabel: labLabel(row), details })
+}
 
 // ── Laboratórios ──────────────────────────────────────────────────────────
 // GET /labs — ativos (ou todos com ?all=1) + última vistoria finalizada e o
@@ -229,10 +243,11 @@ app.post('/', async c => {
   if (!lab) return c.json({ error: 'Laboratório não encontrado' }, 404)
   const me = c.get('user').id
   const draft = await db.prepare(`SELECT id FROM lab_inspections WHERE lab_id = ? AND status = 'rascunho' AND created_by = ? ORDER BY started_at DESC LIMIT 1`).get(lab.id, me)
-  if (draft) return c.json(await load(c, draft.id))
+  if (draft) { auditInspection(c, null); return c.json(await load(c, draft.id)) } // retomar não é novidade
   const id = uuid()
   await db.prepare('INSERT INTO lab_inspections (id, lab_id, building, lab_name, created_by) VALUES (?, ?, ?, ?, ?)')
     .run(id, lab.id, lab.building, lab.name, me)
+  auditInspection(c, 'start', { id, lab_name: lab.name, building: lab.building })
   return c.json(await load(c, id))
 })
 
@@ -247,6 +262,7 @@ app.put('/:id', async c => {
   const { row, error } = await draftFor(c, c.req.param('id'))
   if (error) return error
   const { notes } = await c.req.json()
+  auditInspection(c, null)
   await c.get('db').prepare(`UPDATE lab_inspections SET notes = ?, updated_at = datetime('now') WHERE id = ?`).run(str(notes, 5000), row.id)
   return c.json({ ok: true })
 })
@@ -259,6 +275,7 @@ app.put('/:id/answers/:itemId', async c => {
   const item = await db.prepare('SELECT * FROM inspection_items WHERE id = ?').get(c.req.param('itemId'))
   if (!item) return c.json({ error: 'Item não encontrado' }, 404)
   const b = await c.req.json()
+  auditInspection(c, null)
   if (!STATUSES.includes(b.status)) return c.json({ error: 'Escolha Conforme, Não conforme ou Não se aplica' }, 400)
   const nok = b.status === 'nao_conforme'
   // Ao sair de "Não conforme", o problema e a foto deixam de valer.
@@ -282,6 +299,7 @@ app.post('/:id/answers/:itemId/photo', async c => {
   if (error) return error
   if (Number(c.req.header('Content-Length') || 0) > MAX_PHOTO_CHARS + MAX_THUMB_CHARS + 10_000) return c.json({ error: 'Foto grande demais' }, 413)
   const { data, thumb } = await c.req.json()
+  auditInspection(c, null)
   if (!PHOTO_RE.test(data || '') || data.length > MAX_PHOTO_CHARS) return c.json({ error: 'Foto inválida — use JPG, PNG ou WEBP.' }, 400)
   if (!PHOTO_RE.test(thumb || '') || thumb.length > MAX_THUMB_CHARS) return c.json({ error: 'Miniatura inválida' }, 400)
   const res = await c.get('db').prepare(`UPDATE lab_inspection_answers SET photo_thumb = ?, photo_data = ?, updated_at = datetime('now')
@@ -293,6 +311,7 @@ app.post('/:id/answers/:itemId/photo', async c => {
 app.delete('/:id/answers/:itemId/photo', async c => {
   const { row, error } = await draftFor(c, c.req.param('id'))
   if (error) return error
+  auditInspection(c, null)
   await c.get('db').prepare('UPDATE lab_inspection_answers SET photo_thumb = NULL, photo_data = NULL WHERE inspection_id = ? AND item_id = ?')
     .run(row.id, c.req.param('itemId'))
   return c.json({ ok: true })
@@ -349,6 +368,10 @@ app.post('/:id/finish', async c => {
     .run(notes, count('conforme'), count('nao_conforme'), count('na'), incidents, row.id)
   if (!(res?.meta?.changes ?? res?.changes)) return c.json({ error: 'Esta vistoria já foi finalizada.' }, 409)
   if (stmts.length) await db.batch(stmts)
+  auditInspection(c, 'finish', row, {
+    itens: answers.length, ok: count('conforme'), problemas: count('nao_conforme'), na: count('na'), incidentes: incidents,
+    com_problema: answers.filter(a => a.status === 'nao_conforme').map(a => a.item_label).slice(0, 10),
+  })
   return c.json(await load(c, row.id))
 })
 
@@ -365,6 +388,10 @@ app.delete('/:id', async c => {
     { sql: 'DELETE FROM lab_inspection_answers WHERE inspection_id = ?', args: [row.id] },
     { sql: 'DELETE FROM lab_inspections WHERE id = ?', args: [row.id] },
   ])
+  const tech = row.created_by === c.get('user').id ? null : await db.scalar('SELECT name FROM users WHERE id = ?', row.created_by)
+  auditInspection(c, row.status === 'rascunho' ? 'discard' : 'delete', row,
+    row.status === 'rascunho' ? (tech ? { tecnico: tech } : null) : { tecnico: tech, finalizada_em: row.finished_at, problemas: row.nok_count },
+    row.status === 'rascunho' ? undefined : 'warning')
   return c.json({ ok: true })
 })
 

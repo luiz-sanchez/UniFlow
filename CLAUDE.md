@@ -194,6 +194,9 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   **Modo tablet** (botão na tela; `store/tabletModeStore.js`, lembrado no aparelho em `localStorage uniflow-vistoria-tablet`): nas rotas
   /vistorias o AppLayout some com menu e barra de cima, pede tela cheia (o navegador só deixa num toque → 1º toque na tela reentra) e
   segura a tela acesa (Wake Lock). Manifesto do PWA tem atalho "Vistoria" (`shortcuts`, segurar o ícone do app instalado).
+  **Log da vistoria** (Admin → Logs): `vistoria.start|finish|discard|delete` com "Laboratório NN (PRÉDIO)" e o resultado (problemas,
+  incidentes); cada toque nas respostas NÃO vira linha — a rota faz `c.set('auditDone', true)` e o log genérico do worker.js pula
+  (recusadas 401/403 continuam no genérico). Mesmo mecanismo serve pra qualquer rota que queira gravar log próprio.
 - **Impressoras → Estoque de insumos** (`routes/printerSupplies.js`, `PrinterSuppliesPage.jsx`, rota `/estoque-insumos/:location`, módulo
   `printers`, sem separação por departamento — é estoque da TI): catálogo (tipo, cor, código, modelos compatíveis), saldo e mínimo **por
   prédio** em `printer_supply_stock` (não soma o histórico), histórico em `printer_supply_movements` (entrada, troca NA impressora,

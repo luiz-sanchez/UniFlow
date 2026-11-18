@@ -62,6 +62,10 @@ const FIXED = {
   'auth.logout': 'Saiu do sistema',
   'auth.denied': 'Tentou entrar com e-mail não permitido',
   'audit.export': 'Exportou os logs',
+  'vistoria.start': 'Começou a vistoria',
+  'vistoria.finish': 'Finalizou a vistoria',
+  'vistoria.discard': 'Descartou o rascunho da vistoria',
+  'vistoria.delete': 'Apagou a vistoria finalizada',
 }
 
 function parseDetails(row) {
@@ -78,6 +82,7 @@ export function describe(row) {
     if (row.action === 'vault.update' && details?.campos?.length) note = `Mudou: ${details.campos.join(', ')}`
     if (row.action === 'auth.login' && details?.primeiro_acesso) note = 'Primeiro acesso'
     if (row.action === 'audit.export' && details?.rows != null) note = `${details.rows} linha(s)`
+    if (row.action.startsWith('vistoria.')) note = inspectionNote(row.action, details)
     const target = row.action === 'vault.open' ? '' : row.target_label || (row.action.startsWith('auth.') ? '' : '—')
     return { what: FIXED[row.action], target, note }
   }
@@ -89,6 +94,24 @@ export function describe(row) {
     target: AREA[resource] || resource,
     note: row.status >= 400 && !denied ? `Não concluiu (erro ${row.status})` : null,
   }
+}
+
+// Vistoria de Laboratórios: o resultado em uma frase ("2 problemas: Monitores, Iluminação · 1 incidente aberto").
+function inspectionNote(action, d) {
+  if (!d) return null
+  const n = (x, um, varios) => `${x} ${x === 1 ? um : varios}`
+  if (action === 'vistoria.finish') {
+    const parts = [d.problemas ? `${n(d.problemas, 'problema', 'problemas')}${d.com_problema?.length ? ': ' + d.com_problema.join(', ') : ''}` : 'Tudo conforme']
+    if (d.incidentes) parts.push(n(d.incidentes, 'incidente aberto', 'incidentes abertos'))
+    return parts.join(' · ')
+  }
+  if (action === 'vistoria.delete') {
+    // finished_at vem em UTC ("2026-11-18 13:21:15")
+    const when = d.finalizada_em ? ` em ${new Date(d.finalizada_em.replace(' ', 'T') + 'Z').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}` : ''
+    return d.tecnico ? `Feita por ${d.tecnico}${when}` : (when ? `Feita${when}` : null)
+  }
+  if (action === 'vistoria.discard' && d.tecnico) return `Começada por ${d.tecnico}`
+  return null
 }
 
 const INFINITIVE = { create: 'criar', update: 'editar', delete: 'excluir', export: 'exportar' }

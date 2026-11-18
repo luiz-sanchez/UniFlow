@@ -122,6 +122,7 @@ app.use('/api/*', async (c, next) => {
   const verb = AUDIT_VERBS[c.req.method]
   if (!verb && !isExport) return
   if (!c.get('user')) return // sem login: a rota já respondeu 401, nada a atribuir
+  if (c.get('auditDone')) return // a rota já gravou um log mais claro (ex.: Vistoria)
   const status = c.res.status
   auditInBackground(c, {
     category: 'change',
