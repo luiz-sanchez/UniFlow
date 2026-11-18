@@ -33,13 +33,15 @@ const nowBrasilia = () => new Date(Date.now() - 3 * 3600 * 1000).toISOString().s
 app.get('/labs', async c => {
   const db = c.get('db')
   const all = c.req.query('all') === '1'
+  // última vistoria finalizada de cada laboratório (dia em horário de Brasília → "feita hoje")
   const rows = await db.prepare(`
-    SELECT l.*,
-      (SELECT i.id FROM lab_inspections i WHERE i.lab_id = l.id AND i.status = 'finalizada' ORDER BY i.finished_at DESC LIMIT 1) as last_id,
-      (SELECT i.finished_at FROM lab_inspections i WHERE i.lab_id = l.id AND i.status = 'finalizada' ORDER BY i.finished_at DESC LIMIT 1) as last_at,
-      (SELECT i.nok_count FROM lab_inspections i WHERE i.lab_id = l.id AND i.status = 'finalizada' ORDER BY i.finished_at DESC LIMIT 1) as last_nok,
+    SELECT l.*, last.id as last_id, last.finished_at as last_at, last.nok_count as last_nok,
+      date(last.finished_at, '-3 hours') as last_day, u.name as last_by,
       (SELECT i.id FROM lab_inspections i WHERE i.lab_id = l.id AND i.status = 'rascunho' AND i.created_by = ? ORDER BY i.started_at DESC LIMIT 1) as draft_id
-    FROM inspection_labs l ${all ? '' : 'WHERE l.active = 1'}
+    FROM inspection_labs l
+    LEFT JOIN lab_inspections last ON last.id = (SELECT i.id FROM lab_inspections i WHERE i.lab_id = l.id AND i.status = 'finalizada' ORDER BY i.finished_at DESC LIMIT 1)
+    LEFT JOIN users u ON u.id = last.created_by
+    ${all ? '' : 'WHERE l.active = 1'}
     ORDER BY l.building, l.sort, l.name COLLATE NOCASE
   `).all(c.get('user').id)
   return c.json(rows)
@@ -165,6 +167,20 @@ app.get('/', async c => {
   if (days > 0) { sql += ` AND i.finished_at >= datetime('now', ?)`; args.push(`-${Math.min(days, 3650)} days`) }
   sql += ' ORDER BY i.finished_at DESC LIMIT 300'
   return c.json(await c.get('db').prepare(sql).all(...args))
+})
+
+// GET /daily ?days=14 — vistoria é diária: quantas foram finalizadas por laboratório
+// em cada dia (horário de Brasília). Dia sem linha = não teve vistoria.
+app.get('/daily', async c => {
+  const days = Math.min(Math.max(parseInt(c.req.query('days'), 10) || 14, 1), 62)
+  const rows = await c.get('db').prepare(`
+    SELECT i.lab_id, date(i.finished_at, '-3 hours') as day, COUNT(*) as n, MAX(i.nok_count) as nok
+    FROM lab_inspections i
+    WHERE i.status = 'finalizada' AND i.finished_at >= datetime('now', ?)
+    GROUP BY i.lab_id, day
+  `).all(`-${days + 1} days`)
+  // Brasília = UTC−3 o ano todo (sem horário de verão desde 2019)
+  return c.json({ today: new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10), days, rows })
 })
 
 // GET /recurring ?days=90 — item que deu "Não conforme" em 2+ vistorias do mesmo laboratório

@@ -251,3 +251,51 @@
   .problemList li { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) { .problem, .successBanner { animation: none; } }
+
+/* ── Vistoria diária (nov/2026) ── */
+.today {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px 20px;
+  padding: 16px 18px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface);
+}
+.todayText { display: flex; flex-direction: column; gap: 2px; }
+.todayText strong { font-size: 1.05rem; font-weight: 600; }
+.todayText span { font-size: 13.5px; color: var(--text-muted); }
+.todayBar { grid-column: 1 / -1; grid-row: 2; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.todayBar span { display: block; height: 100%; border-radius: inherit; background: var(--success); transition: width var(--dur-slow) ease; }
+.today .periods { grid-column: 2; grid-row: 1; }
+.labDone { background: color-mix(in srgb, var(--success) 4%, var(--surface)); }
+.doneTag { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 9px;
+  color: var(--success-text); background: color-mix(in srgb, var(--success) 14%, transparent); }
+.doneTag.tone_bad { color: var(--danger-text); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.labCtaSoft { color: var(--text-muted); font-weight: 500; }
+.tone_none { color: var(--warning-text); }
+
+.daily { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 16px 18px; }
+.daily h2 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 12px; font-size: 1.05rem; font-weight: 600; }
+.daily h2 span { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.dailyScroll { overflow-x: auto; }
+.dailyTable { border-collapse: collapse; width: 100%; font-size: 13px; }
+.dailyTable th, .dailyTable td { padding: 4px 3px; text-align: center; border-bottom: 1px solid var(--border); }
+.dailyTable thead th { font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.dailyTable thead th span { display: block; font-size: 11px; font-weight: 500; }
+.dailyTable tbody th { text-align: left; font-weight: 500; white-space: nowrap; padding-right: 12px; }
+.dailyTable thead th:first-child { text-align: left; }
+.dailyTable tr:last-child > * { border-bottom: none; }
+.dailyTable .weekend { opacity: .55; }
+.dailyTable .isToday { background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.dailyTable thead .isToday { color: var(--text); }
+.dailyCount { color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 10px !important; }
+.cell {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 7px;
+  background: var(--surface-2); font-size: 14px; vertical-align: middle;
+}
+.cellOk { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success-text); }
+.cellBad { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger-text); }
+.dailyLegend { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0 0; font-size: 12.5px; color: var(--text-muted); }
+.dailyLegend span { display: inline-flex; align-items: center; gap: 6px; }
+.dailyLegend .cell { width: 14px; height: 14px; border-radius: 4px; }
+
+@media (max-width: 760px) {
+  .today { grid-template-columns: 1fr; }
+  .today .periods { grid-column: 1; grid-row: 3; }
+}

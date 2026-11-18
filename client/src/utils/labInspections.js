@@ -37,3 +37,17 @@ export function agoText(v) {
 }
 
 export const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
+
+// A vistoria é DIÁRIA: o "dia" é sempre o de Brasília (UTC−3 o ano todo),
+// igual ao servidor (`date(finished_at, '-3 hours')`).
+export const brDay = (offset = 0) => new Date(Date.now() - 3 * 3600e3 + offset * 86400e3).toISOString().slice(0, 10)
+
+export const timeOf = v => dbDate(v)?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || ''
+
+const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
+// "2026-11-18" → { wd: 'qua', dm: '18/11', weekend: false }
+export function dayParts(iso) {
+  const d = new Date(iso + 'T12:00:00Z')
+  const w = d.getUTCDay()
+  return { wd: WEEKDAYS[w], dm: `${iso.slice(8, 10)}/${iso.slice(5, 7)}`, weekend: w === 0 || w === 6 }
+}

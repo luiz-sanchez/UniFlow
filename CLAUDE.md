@@ -53,7 +53,7 @@ npx wrangler deploy
 ```
 - Erro **7403** ("conta não autorizada") = wrangler logado na conta errada → `npx wrangler logout`, fechar a sessão
   do Cloudflare no navegador (ou aba anônima) e `npx wrangler login` com a conta certa. Às vezes é passageiro: tentar de novo.
-- Migrações em `migrations/NNNN_*.sql` (hoje até 0073). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
+- Migrações em `migrations/NNNN_*.sql` (hoje até 0074). Seeds com **dados sensíveis NÃO entram no repo** (ex: senhas de Wi-Fi das VLANs).
 - Secrets (nunca no código): `JWT_SECRET`, `GLPI_APP_TOKEN`, `GLPI_USER_TOKEN`, `GOOGLE_SA_*`, `VAULT_ENCRYPTION_KEY`, Gmail/Resend etc. Variáveis públicas em `wrangler.jsonc`.
 
 ## Teste local (sem login Google)
@@ -187,6 +187,10 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   incidente). Finalizar tem trava (2 toques não duplicam incidente). Histórico + "Problemas que se repetem" (mesmo item não conforme em
   2+ vistorias em 90 dias). Rascunho: só quem começou (ou Super Admin) mexe/descarta; finalizada: só Super Admin apaga. Teste: `lab-inspections-e2e.mjs`.
   Referência pedida pelo Luiz (github ricardomacielalonso/uniflow-labs) deu 404 — feito sem ela.
+  **Vistoria é DIÁRIA** (18/11/2026, migração 0074 = lista oficial: Lab 01–03 CENTRO, 04–22 SEDE menos o 21, Lab 21 G5, nomes
+  "Laboratório NN"): dia = Brasília (`date(finished_at,'-3 hours')`, `brDay()` no front). Cartão "Feita hoje às HH:MM" / "Falta hoje",
+  faixa "Faltam N hoje" com filtro (padrão "Faltam hoje"), nº na aba do prédio = faltam hoje; Histórico → "Dia a dia" (lab × 14 dias,
+  `GET /daily`). Lembrete automático de quem não fez: ainda não existe.
 - **Impressoras → Estoque de insumos** (`routes/printerSupplies.js`, `PrinterSuppliesPage.jsx`, rota `/estoque-insumos/:location`, módulo
   `printers`, sem separação por departamento — é estoque da TI): catálogo (tipo, cor, código, modelos compatíveis), saldo e mínimo **por
   prédio** em `printer_supply_stock` (não soma o histórico), histórico em `printer_supply_movements` (entrada, troca NA impressora,

@@ -86,6 +86,22 @@ expect('2ª vistoria finalizada', (await call('ti', 'POST', `${P}/${second.id}/f
 r = await call('ti', 'GET', `${P}/recurring?days=90`)
 const rec = r.j?.find(x => x.lab_id === lab.id && x.item_id === items[7].id)
 expect('Iluminação aparece como recorrente (2 de 2)', `${rec?.times}|${rec?.inspections}`, '2|2')
+// ── Vistoria diária ──────────────────────────────────────────────────────
+const brToday = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10)
+r = await call('ti', 'GET', `${P}/labs`)
+const labRow = r.j?.find(l => l.id === lab.id)
+expect('laboratório: feita hoje (dia de Brasília)', labRow?.last_day, brToday)
+expect('laboratório: quem fez a última', labRow?.last_by, 'd-ti-ana')
+expect('laboratório sem vistoria: sem last_day', r.j?.find(l => l.id === emptyLab.id)?.last_day ?? null, null)
+r = await call('ti', 'GET', `${P}/daily?days=14`)
+const dayRow = r.j?.rows?.find(x => x.lab_id === lab.id)
+expect('dia a dia: hoje = Brasília', r.j?.today, brToday)
+expect('dia a dia: 2 vistorias hoje, com problema', `${dayRow?.day}|${dayRow?.n}|${dayRow?.nok > 0}`, `${brToday}|2|true`)
+expect('Auditor vê o dia a dia', (await call('aud', 'GET', `${P}/daily`)).s, 200)
+const labs74 = (await call('admin', 'GET', `${P}/labs`)).j || []
+const by = n => labs74.find(l => l.name === `Laboratório ${n}`)?.building
+expect('lista oficial (0074): 01 CENTRO, 04 SEDE, 21 G5, 22 SEDE', [by('01'), by('04'), by('21'), by('22')].join(','), 'centro,sede,g5,sede')
+
 expect('laboratório usado não pode ser excluído', (await call('ti', 'DELETE', `${P}/labs/${lab.id}`)).s, 409)
 
 // ── Descartar / apagar ───────────────────────────────────────────────────
