@@ -41,6 +41,8 @@ importante mudar. Documentação técnica longa: `docs/` (comece por
   `error` da fila, em `app_settings.email_send_status` e vira aviso no sininho dos Super Admins (1/dia). Teste: `email-send-e2e.mjs`.
   Importar backup no D1: linhas > ~100 KB dão SQLITE_TOOBIG → dividir em INSERT com '' + `UPDATE col = col || 'pedaço'`.
   `wrangler login` com o navegador na conta errada: autorizar em ~2 min (senão expira) ou usar janela anônima.
+  Em 19/11/2026 trocou sozinho para **orcamento.carreiras@fecaf.com.br** (o navegador do PC está logado nela e autoriza na hora):
+  `npx wrangler logout` + `npx wrangler login --browser=false` e o Luiz cola o link numa janela anônima.
 
 ### Deploy (sempre nesta ordem)
 **`npm run release`** faz tudo abaixo com checagens (conta, git limpo, backup + migração, build, deploy, confere produção).
