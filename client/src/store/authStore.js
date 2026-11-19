@@ -15,8 +15,9 @@ export const useAuthStore = create((set) => ({
 
   // byUser = a pessoa tocou em "Sair" (não é a sessão que caiu). No tablet da
   // vistoria isso também desconecta a conta Google do navegador.
+  // byUser = 'google' = "Sair e desconectar o Google" (menu da conta, qualquer aparelho).
   logout: (byUser = false) => {
-    if (byUser === true && isTabletDevice()) signOutGoogle()
+    if (byUser === 'google' || (byUser === true && isTabletDevice())) signOutGoogle()
     // Log de auditoria "saiu" — o pedido sai com o token antes de ele ser apagado.
     // Sem token (a sessão já caiu) não há o que registrar: sem este cuidado o 401
     // do próprio "sair" disparava outro "sair", em laço (nov/2026).
