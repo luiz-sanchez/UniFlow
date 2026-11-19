@@ -151,7 +151,7 @@ function TabletButton() {
       {!full && document.documentElement.requestFullscreen && <button className="btn btn-ghost" onClick={requestFullscreen}><LineIcon name="maximize" /> Tela cheia</button>}
       <button className="btn btn-ghost" onClick={exit}><LineIcon name="minimize" /> Sair do modo tablet</button>
       {/* tablet compartilhado: quem está vistoriando + sair (pede conta e senha no próximo) */}
-      <button className="btn btn-ghost" onClick={() => logout(true)} title="Sai do UniFlow e da conta Google deste tablet">
+      <button className="btn btn-ghost" onClick={() => logout('google')} title="Sai do UniFlow e da conta Google deste tablet">
         <LineIcon name="logout" /> Sair ({user?.name?.split(' ')[0] || 'conta'})
       </button>
     </>

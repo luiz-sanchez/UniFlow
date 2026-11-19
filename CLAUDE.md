@@ -198,8 +198,8 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   para `accounts.google.com/Logout?continue=appengine…/_ah/logout?continue=<app>/login` e volta — a janelinha (window.open) não
   funcionava no app instalado; só em toque — `logout(true)`; o logout por 401 não sai do Google) → próxima entrada pede e-mail e
   senha; login nesse aparelho cai em /vistorias. Só a saída não bastou (19/11: a conta continuava "pré-salva", entrava com um clique) →
-  menu da conta tem também "Sair e desconectar o Google" (`logout('google')`, qualquer aparelho — o "Sair" do perfil só saía do Google
-  com o modo tablet ligado, e ele desligou ao reinstalar o app). O login nesse aparelho manda `max_age=0` ao Google (obriga a senha mesmo com a conta conectada). Não vale se a conta Google estiver adicionada no Android/Chrome do tablet. Manifesto do PWA tem atalho "Vistoria" (`shortcuts`, segurar o ícone do app instalado).
+  **Desde 19/11/2026 o "Sair" do menu da conta SEMPRE sai também do Google, em qualquer aparelho** (`logout('google')`; decisão do
+  Luiz — antes só com o modo tablet ligado, que desligou ao reinstalar o app). Portal do Professor e logout por 401 não saem do Google. O login nesse aparelho manda `max_age=0` ao Google (obriga a senha mesmo com a conta conectada). Não vale se a conta Google estiver adicionada no Android/Chrome do tablet. Manifesto do PWA tem atalho "Vistoria" (`shortcuts`, segurar o ícone do app instalado).
   **Log da vistoria** (Admin → Logs): `vistoria.start|finish|discard|delete` com "Laboratório NN (PRÉDIO)" e o resultado (problemas,
   incidentes); cada toque nas respostas NÃO vira linha — a rota faz `c.set('auditDone', true)` e o log genérico do worker.js pula
   (recusadas 401/403 continuam no genérico). Mesmo mecanismo serve pra qualquer rota que queira gravar log próprio.
