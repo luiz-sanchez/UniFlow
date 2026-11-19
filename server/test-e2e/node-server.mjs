@@ -191,7 +191,7 @@ env.GOOGLE_CLIENT_ID ||= 'mock-google-client'
     return prevFetch(input, init)
   }
 }
-const mockGoogleToken = ({ email, name }) => new SignJWT({ email, name: name || email, email_verified: true, sub: `g-${email}` })
+const mockGoogleToken = ({ email, name, nonce }) => new SignJWT({ email, name: name || email, email_verified: true, sub: `g-${email}`, ...(nonce ? { nonce } : {}) })
   .setProtectedHeader({ alg: 'RS256', kid: 'mock-google' }).setIssuer('https://accounts.google.com')
   .setAudience(env.GOOGLE_CLIENT_ID).setIssuedAt().setExpirationTime('10m').sign(googleKeys.privateKey)
 

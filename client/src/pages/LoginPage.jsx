@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { isTabletDevice } from '../store/tabletModeStore'
+import { googleAuthUrl } from '../utils/googleAuth'
 import s from './Auth.module.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
@@ -74,20 +75,8 @@ export default function LoginPage() {
 
   const handleGoogleClick = () => {
     setError('')
-    const nonce = (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2))
-    const params = new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: `${window.location.origin}/auth/google/callback`,
-      response_type: 'id_token',
-      scope: 'openid email profile',
-      prompt: 'select_account',
-      nonce,
-    })
-    // Tablet da vistoria: max_age=0 obriga o Google a pedir a senha de novo,
-    // mesmo que a conta ainda esteja conectada no navegador.
-    if (isTabletDevice()) params.set('max_age', '0')
     const popup = window.open(
-      `https://accounts.google.com/o/oauth2/v2/auth?${params}`,
+      googleAuthUrl(),
       'google-signin',
       'width=500,height=620,left=200,top=100',
     )

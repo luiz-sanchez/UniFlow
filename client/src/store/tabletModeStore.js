@@ -33,16 +33,14 @@ export const isTabletDevice = read
 // Tablet compartilhado: ao sair do UniFlow, sai também da conta Google do
 // navegador — assim o próximo "Entrar com Google" pede e-mail e senha de novo
 // (sem isso o Google entra direto com a última conta). A janelinha (window.open)
-// não funcionava no app instalado (19/11/2026): agora a PRÓPRIA tela vai para a
-// saída do Google e volta para /login (continue → appengine → nosso endereço).
-// Se o Google não devolver, o "X" da barra do app instalado volta ao UniFlow.
-export function googleLogoutUrl() {
-  const back = `https://appengine.google.com/_ah/logout?continue=${encodeURIComponent(`${window.location.origin}/login`)}`
-  return `https://accounts.google.com/Logout?continue=${encodeURIComponent(back)}`
-}
+// não funcionava no app instalado (19/11/2026): a PRÓPRIA tela vai para a saída
+// do Google, que segue direto para a entrada do Google (utils/googleAuth.js).
 export function signOutGoogle() {
+  // import tardio: googleAuth.js importa este arquivo
   // espera o pedido de "saiu" (log de auditoria) sair antes de trocar de página
-  setTimeout(() => { window.location.href = googleLogoutUrl() }, 400)
+  import('../utils/googleAuth').then(({ googleLogoutUrl }) => {
+    setTimeout(() => { window.location.href = googleLogoutUrl() }, 400)
+  })
 }
 
 export const isTabletPath =path => path === '/vistorias' || path.startsWith('/vistorias/')

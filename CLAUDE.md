@@ -194,9 +194,10 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   **Modo tablet** (botão na tela; `store/tabletModeStore.js`, lembrado no aparelho em `localStorage uniflow-vistoria-tablet`): nas rotas
   /vistorias o AppLayout some com menu e barra de cima, pede tela cheia (o navegador só deixa num toque → 1º toque na tela reentra) e
   segura a tela acesa (Wake Lock). **Tablet compartilhado** (18/11/2026, pedido do Luiz): com o modo tablet ligado, "Sair" (botão
-  "Sair (nome)" na Vistoria ou o avatar) também desconecta a conta Google do navegador (`signOutGoogle`: a PRÓPRIA tela vai
-  para `accounts.google.com/Logout?continue=appengine…/_ah/logout?continue=<app>/login` e volta — a janelinha (window.open) não
-  funcionava no app instalado; só em toque — `logout(true)`; o logout por 401 não sai do Google) → próxima entrada pede e-mail e
+  "Sair (nome)" na Vistoria ou o avatar) também desconecta a conta Google do navegador (`signOutGoogle` + `utils/googleAuth.js`: a PRÓPRIA
+  tela vai para `accounts.google.com/Logout?continue=<URL de entrar com Google>` — o Google segue direto para a entrada dele, e a volta
+  em `/auth/google/callback` sem janelinha entra na própria tela (`GoogleCallback.jsx`, confere o nonce da aba). A janelinha
+  (window.open) não funcionava no app instalado; o caminho via appengine mostrava "Aviso de redirecionamento" (Luiz não quis); só em toque — `logout(true)`; o logout por 401 não sai do Google) → próxima entrada pede e-mail e
   senha; login nesse aparelho cai em /vistorias. Só a saída não bastou (19/11: a conta continuava "pré-salva", entrava com um clique) →
   **Desde 19/11/2026 o "Sair" do menu da conta SEMPRE sai também do Google, em qualquer aparelho** (`logout('google')`; decisão do
   Luiz — antes só com o modo tablet ligado, que desligou ao reinstalar o app). Portal do Professor e logout por 401 não saem do Google. O login nesse aparelho manda `max_age=0` ao Google (obriga a senha mesmo com a conta conectada). Não vale se a conta Google estiver adicionada no Android/Chrome do tablet. Manifesto do PWA tem atalho "Vistoria" (`shortcuts`, segurar o ícone do app instalado).
