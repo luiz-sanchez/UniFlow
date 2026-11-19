@@ -196,7 +196,8 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   segura a tela acesa (Wake Lock). **Tablet compartilhado** (18/11/2026, pedido do Luiz): com o modo tablet ligado, "Sair" (botão
   "Sair (nome)" na Vistoria ou o avatar) também desconecta a conta Google do navegador (`signOutGoogle`: janelinha em
   `accounts.google.com/Logout` fechada em 4 s; só em toque — `logout(true)`; o logout por 401 não abre) → próxima entrada pede e-mail e
-  senha; login nesse aparelho cai em /vistorias. Não vale se a conta Google estiver adicionada no Android/Chrome do tablet. Manifesto do PWA tem atalho "Vistoria" (`shortcuts`, segurar o ícone do app instalado).
+  senha; login nesse aparelho cai em /vistorias. Só a saída não bastou (19/11: a conta continuava "pré-salva", entrava com um clique) →
+  o login nesse aparelho manda `max_age=0` ao Google (obriga a senha mesmo com a conta conectada). Não vale se a conta Google estiver adicionada no Android/Chrome do tablet. Manifesto do PWA tem atalho "Vistoria" (`shortcuts`, segurar o ícone do app instalado).
   **Log da vistoria** (Admin → Logs): `vistoria.start|finish|discard|delete` com "Laboratório NN (PRÉDIO)" e o resultado (problemas,
   incidentes); cada toque nas respostas NÃO vira linha — a rota faz `c.set('auditDone', true)` e o log genérico do worker.js pula
   (recusadas 401/403 continuam no genérico). Mesmo mecanismo serve pra qualquer rota que queira gravar log próprio.

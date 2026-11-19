@@ -83,6 +83,9 @@ export default function LoginPage() {
       prompt: 'select_account',
       nonce,
     })
+    // Tablet da vistoria: max_age=0 obriga o Google a pedir a senha de novo,
+    // mesmo que a conta ainda esteja conectada no navegador.
+    if (isTabletDevice()) params.set('max_age', '0')
     const popup = window.open(
       `https://accounts.google.com/o/oauth2/v2/auth?${params}`,
       'google-signin',
