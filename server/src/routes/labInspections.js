@@ -41,6 +41,10 @@ function auditInspection(c, action, row, details, severity) {
   auditInBackground(c, { category: 'change', action: `vistoria.${action}`, severity, status: 200, targetId: row.id, targetLabel: labLabel(row), details })
 }
 
+// Período da vistoria pelo horário em que foi FINALIZADA (Brasília, UTC−3):
+// até 13:59 = 'manha', 14:00 em diante = 'noite'.
+const PERIOD_SQL = `CASE WHEN strftime('%H', i.finished_at, '-3 hours') < '14' THEN 'manha' ELSE 'noite' END`
+
 // ── Laboratórios ──────────────────────────────────────────────────────────
 // GET /labs — ativos (ou todos com ?all=1) + última vistoria finalizada e o
 // rascunho em aberto de quem pergunta.
@@ -58,7 +62,17 @@ app.get('/labs', async c => {
     ${all ? '' : 'WHERE l.active = 1'}
     ORDER BY l.building, l.sort, l.name COLLATE NOCASE
   `).all(c.get('user').id)
-  return c.json(rows)
+  // Dois períodos por dia (19/11/2026, pedido do Luiz): Manhã = finalizada até
+  // 13:59 de Brasília, Noite = 14:00 em diante. `periods` = a última de HOJE em cada um.
+  const today = await db.prepare(`
+    SELECT i.lab_id, ${PERIOD_SQL} as period, i.id, i.finished_at as at, i.nok_count as nok, u.name as by_name
+    FROM lab_inspections i LEFT JOIN users u ON u.id = i.created_by
+    WHERE i.status = 'finalizada' AND i.finished_at >= datetime(date('now', '-3 hours'), '+3 hours')
+    ORDER BY i.finished_at
+  `).all()
+  const byLab = new Map(rows.map(r => [r.id, { ...r, periods: {} }]))
+  for (const t of today) { const lab = byLab.get(t.lab_id); if (lab) lab.periods[t.period] = { id: t.id, at: t.at, nok: t.nok, by: t.by_name } }
+  return c.json([...byLab.values()])
 })
 
 function cleanLab(body, current = {}) {
@@ -165,7 +179,8 @@ app.delete('/items/:id', async c => {
 
 // ── Histórico e problemas recorrentes ─────────────────────────────────────
 const LIST_COLS = `i.id, i.lab_id, i.building, i.lab_name, i.status, i.notes, i.ok_count, i.nok_count, i.na_count,
-  i.incident_count, i.created_by, u.name as technician_name, i.started_at, i.finished_at`
+  i.incident_count, i.created_by, u.name as technician_name, i.started_at, i.finished_at,
+  CASE WHEN i.finished_at IS NULL THEN NULL ELSE ${PERIOD_SQL} END as period`
 
 // GET / ?building=&lab_id=&days= — vistorias finalizadas (mais novas primeiro)
 app.get('/', async c => {
@@ -183,15 +198,15 @@ app.get('/', async c => {
   return c.json(await c.get('db').prepare(sql).all(...args))
 })
 
-// GET /daily ?days=14 — vistoria é diária: quantas foram finalizadas por laboratório
-// em cada dia (horário de Brasília). Dia sem linha = não teve vistoria.
+// GET /daily ?days=14 — quantas foram finalizadas por laboratório em cada dia
+// (Brasília) e período (manha/noite). Sem linha = não teve vistoria naquele período.
 app.get('/daily', async c => {
   const days = Math.min(Math.max(parseInt(c.req.query('days'), 10) || 14, 1), 62)
   const rows = await c.get('db').prepare(`
-    SELECT i.lab_id, date(i.finished_at, '-3 hours') as day, COUNT(*) as n, MAX(i.nok_count) as nok
+    SELECT i.lab_id, date(i.finished_at, '-3 hours') as day, ${PERIOD_SQL} as period, COUNT(*) as n, MAX(i.nok_count) as nok
     FROM lab_inspections i
     WHERE i.status = 'finalizada' AND i.finished_at >= datetime('now', ?)
-    GROUP BY i.lab_id, day
+    GROUP BY i.lab_id, day, period
   `).all(`-${days + 1} days`)
   // Brasília = UTC−3 o ano todo (sem horário de verão desde 2019)
   return c.json({ today: new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10), days, rows })

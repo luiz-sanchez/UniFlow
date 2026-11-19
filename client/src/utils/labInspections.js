@@ -42,7 +42,12 @@ export const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 // igual ao servidor (`date(finished_at, '-3 hours')`).
 export const brDay = (offset = 0) => new Date(Date.now() - 3 * 3600e3 + offset * 86400e3).toISOString().slice(0, 10)
 
-export const timeOf = v => dbDate(v)?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || ''
+// Dois períodos por dia (19/11/2026): pelo horário em que a vistoria foi
+// FINALIZADA, em Brasília — até 13:59 Manhã, 14:00 em diante Noite (igual ao servidor).
+export const DAY_PERIODS = { manha: 'Manhã', noite: 'Noite' }
+export const brPeriod = () => (new Date(Date.now() - 3 * 3600e3).getUTCHours() < 14 ? 'manha' : 'noite')
+
+export const timeOf =v => dbDate(v)?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || ''
 
 const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 // "2026-11-18" → { wd: 'qua', dm: '18/11', weekend: false }

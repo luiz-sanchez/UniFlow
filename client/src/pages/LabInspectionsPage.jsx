@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
@@ -9,7 +9,7 @@ import { alertDialog } from '../store/dialogStore'
 import LineIcon from '../components/common/LineIcon'
 import InspectionSetup from '../components/labInspections/InspectionSetup'
 import { useTabletMode, requestFullscreen } from '../store/tabletModeStore'
-import { BUILDINGS, fmtWhen, agoText, plural, brDay, timeOf, dayParts } from '../utils/labInspections'
+import { BUILDINGS, fmtWhen, agoText, plural, brDay, brPeriod, DAY_PERIODS, timeOf, dayParts } from '../utils/labInspections'
 import s from './LabInspections.module.css'
 
 // Fluxos → Vistoria de Laboratórios (feita para o tablet): escolher o
@@ -17,37 +17,49 @@ import s from './LabInspections.module.css'
 // repete. Checklist em LabInspectionRunPage. Servidor: routes/labInspections.js.
 const PERIODS = [['30', '30 dias'], ['90', '90 dias'], ['0', 'Tudo']]
 
-// A vistoria é diária: o cartão diz se o laboratório já foi vistoriado HOJE.
-function LabCard({ lab, today, writable, onOpen, busy }) {
-  const doneToday = lab.last_day === today
-  let tone, status
-  if (doneToday) {
-    tone = lab.last_nok ? 'bad' : 'ok'
-    status = `Feita hoje às ${timeOf(lab.last_at)}${lab.last_by ? ` · ${lab.last_by.split(' ')[0]}` : ''} · ${lab.last_nok ? plural(lab.last_nok, 'problema', 'problemas') : 'tudo conforme'}`
-  } else {
-    tone = 'none'
-    status = `Falta hoje · ${lab.last_at ? `última ${agoText(lab.last_at)}` : 'nunca vistoriado'}`
-  }
+// Dois períodos por dia: o cartão mostra Manhã e Noite de HOJE; o destaque
+// (feito/falta) é o período de agora.
+function PeriodLine({ name, p, isNow, cur }) {
+  let tone, text
+  if (p) {
+    tone = p.nok ? 'bad' : 'ok'
+    text = `${timeOf(p.at)}${p.by ? ` · ${p.by.split(' ')[0]}` : ''} · ${p.nok ? plural(p.nok, 'problema', 'problemas') : 'tudo conforme'}`
+  } else if (isNow) { tone = 'none'; text = 'falta' }
+  else if (cur === 'noite') { tone = 'miss'; text = 'não foi feita' } // a manhã já passou
+  else { tone = 'later'; text = 'a partir das 14h' }
+  return (
+    <span className={`${s.labStatus} ${s[`tone_${tone}`]} ${isNow ? s.periodNow : ''}`}>
+      <span className={s.dot} aria-hidden="true" />
+      <span><b>{DAY_PERIODS[name]}</b> · {text}</span>
+    </span>
+  )
+}
+
+function LabCard({ lab, cur, writable, onOpen, busy }) {
+  const periods = lab.periods || {}
+  const doneNow = !!periods[cur]
+  const nowP = periods[cur]
   const meta = [lab.location, lab.computers ? plural(lab.computers, 'computador', 'computadores') : null].filter(Boolean).join(' · ')
   const clickable = writable || lab.last_id
+  const summary = Object.keys(DAY_PERIODS).map(k => `${DAY_PERIODS[k]}: ${periods[k] ? `feita às ${timeOf(periods[k].at)}` : 'não feita'}`).join('. ')
   return (
     <li>
-      <button type="button" className={`${s.labCard} ${doneToday ? s.labDone : ''}`} onClick={() => onOpen(lab)} disabled={!clickable || busy}
-        aria-label={`${lab.name}. ${status}${lab.draft_id ? '. Vistoria em andamento' : ''}`}>
+      <button type="button" className={`${s.labCard} ${doneNow ? s.labDone : ''}`} onClick={() => onOpen(lab)} disabled={!clickable || busy}
+        aria-label={`${lab.name}. ${summary}${lab.draft_id ? '. Vistoria em andamento' : ''}`}>
         <span className={s.labTop}>
           <span className={s.labName}>{lab.name}</span>
           {lab.draft_id ? <span className={s.draftTag}>Em andamento</span>
-            : doneToday && <span className={`${s.doneTag} ${s[`tone_${tone}`]}`}><LineIcon name={lab.last_nok ? 'alert' : 'check'} /> Hoje</span>}
+            : doneNow && <span className={`${s.doneTag} ${s[`tone_${nowP.nok ? 'bad' : 'ok'}`]}`}><LineIcon name={nowP.nok ? 'alert' : 'check'} /> {DAY_PERIODS[cur]}</span>}
         </span>
         <span className={s.labMeta}>{meta || 'Sem localização cadastrada'}</span>
-        <span className={`${s.labStatus} ${s[`tone_${tone}`]}`}>
-          <span className={s.dot} aria-hidden="true" />
-          {status}
+        <span className={s.periodLines}>
+          {Object.keys(DAY_PERIODS).map(k => <PeriodLine key={k} name={k} p={periods[k]} isNow={k === cur} cur={cur} />)}
         </span>
+        {!lab.periods?.manha && !lab.periods?.noite && lab.last_at && <span className={s.labMeta}>Última vistoria {lab.last_day === brDay(-1) ? 'ontem' : agoText(lab.last_at)}</span>}
         {writable && (
-          <span className={`${s.labCta} ${doneToday && !lab.draft_id ? s.labCtaSoft : ''}`}>
+          <span className={`${s.labCta} ${doneNow && !lab.draft_id ? s.labCtaSoft : ''}`}>
             <LineIcon name={lab.draft_id ? 'play' : 'clipboard'} />
-            {busy ? 'Abrindo…' : lab.draft_id ? 'Continuar vistoria' : doneToday ? 'Vistoriar de novo' : 'Começar vistoria'}
+            {busy ? 'Abrindo…' : lab.draft_id ? 'Continuar vistoria' : doneNow ? 'Vistoriar de novo' : `Começar vistoria da ${DAY_PERIODS[cur].toLowerCase()}`}
           </span>
         )}
       </button>
@@ -55,21 +67,22 @@ function LabCard({ lab, today, writable, onOpen, busy }) {
   )
 }
 
-// Resumo do dia no prédio: "5 de 19 vistoriados hoje" + barra + filtro "Faltam".
-function TodayBar({ done, total, show, onShow }) {
+// Resumo do período de agora no prédio: "5 de 19 vistoriados na manhã" + barra + filtro "Faltam".
+function TodayBar({ done, total, show, onShow, cur }) {
   if (!total) return null
   const left = total - done
+  const when = cur === 'manha' ? 'na manhã' : 'na noite'
   return (
-    <section className={s.today} aria-label="Vistorias de hoje">
+    <section className={s.today} aria-label={`Vistorias de hoje ${when}`}>
       <div className={s.todayText}>
-        <strong>{left ? `Faltam ${plural(left, 'laboratório', 'laboratórios')} hoje` : 'Todos vistoriados hoje'}</strong>
-        <span>{done} de {total} vistoriados · a vistoria é diária</span>
+        <strong>{left ? `Faltam ${plural(left, 'laboratório', 'laboratórios')} ${when}` : `Todos vistoriados ${when}`}</strong>
+        <span>{done} de {total} vistoriados {when} · são 2 vistorias por dia: manhã (até 13:59) e noite (a partir das 14h)</span>
       </div>
-      <div className={s.todayBar} role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-label="Vistoriados hoje">
+      <div className={s.todayBar} role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-label={`Vistoriados ${when}`}>
         <span style={{ width: `${Math.round((done / total) * 100)}%` }} />
       </div>
       <div className={s.periods} role="radiogroup" aria-label="Mostrar">
-        <button role="radio" aria-checked={show === 'faltam'} className={`${s.chip} ${show === 'faltam' ? s.chipOn : ''}`} onClick={() => onShow('faltam')}>Faltam hoje ({left})</button>
+        <button role="radio" aria-checked={show === 'faltam'} className={`${s.chip} ${show === 'faltam' ? s.chipOn : ''}`} onClick={() => onShow('faltam')}>Faltam {when} ({left})</button>
         <button role="radio" aria-checked={show === 'todos'} className={`${s.chip} ${show === 'todos' ? s.chipOn : ''}`} onClick={() => onShow('todos')}>Todos ({total})</button>
       </div>
     </section>
@@ -83,7 +96,8 @@ function DailyGrid({ labs, daily }) {
     const d = new Date(daily.today + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 13 + i)
     return d.toISOString().slice(0, 10)
   })
-  const map = new Map(daily.rows.map(r => [`${r.lab_id}|${r.day}`, r]))
+  const map = new Map(daily.rows.map(r => [`${r.lab_id}|${r.day}|${r.period}`, r]))
+  const PK = Object.keys(DAY_PERIODS)
   return (
     <section className={s.daily} aria-labelledby="daily-title">
       <h2 id="daily-title">Dia a dia <span>últimos 14 dias</span></h2>
@@ -102,23 +116,28 @@ function DailyGrid({ labs, daily }) {
           </thead>
           <tbody>
             {labs.map(l => {
-              const done = days.filter(d => map.has(`${l.id}|${d}`)).length
+              const done = days.reduce((a, d) => a + PK.filter(k => map.has(`${l.id}|${d}|${k}`)).length, 0)
               return (
                 <tr key={l.id}>
                   <th scope="row">{l.name}</th>
                   {days.map(d => {
-                    const r = map.get(`${l.id}|${d}`)
                     const p = dayParts(d)
-                    const label = r ? (r.nok ? `${p.dm}: vistoriado, com problema` : `${p.dm}: vistoriado, tudo conforme`) : `${p.dm}: sem vistoria`
+                    const parts = PK.map(k => {
+                      const r = map.get(`${l.id}|${d}|${k}`)
+                      return { k, r, label: `${DAY_PERIODS[k]}: ${r ? (r.nok ? 'com problema' : 'tudo conforme') : 'sem vistoria'}` }
+                    })
+                    const label = `${p.dm}. ${parts.map(x => x.label).join('. ')}`
                     return (
                       <td key={d} className={`${p.weekend ? s.weekend : ''} ${d === daily.today ? s.isToday : ''}`} title={label}>
-                        <span className={`${s.cell} ${r ? (r.nok ? s.cellBad : s.cellOk) : ''}`} role="img" aria-label={label}>
-                          {r ? <LineIcon name={r.nok ? 'alert' : 'check'} /> : null}
+                        <span className={s.cellPair} role="img" aria-label={label}>
+                          {parts.map(({ k, r }) => (
+                            <span key={k} className={`${s.cell} ${s.cellHalf} ${r ? (r.nok ? s.cellBad : s.cellOk) : ''}`}>{k === 'manha' ? 'M' : 'N'}</span>
+                          ))}
                         </span>
                       </td>
                     )
                   })}
-                  <td className={s.dailyCount}>{done}/14</td>
+                  <td className={s.dailyCount}>{done}/28</td>
                 </tr>
               )
             })}
@@ -129,6 +148,7 @@ function DailyGrid({ labs, daily }) {
         <span><i className={`${s.cell} ${s.cellOk}`} /> tudo conforme</span>
         <span><i className={`${s.cell} ${s.cellBad}`} /> com problema</span>
         <span><i className={s.cell} /> sem vistoria</span>
+        <span>M = manhã (até 13:59) · N = noite (a partir das 14h)</span>
       </p>
     </section>
   )
@@ -185,7 +205,7 @@ export default function LabInspectionsPage() {
   const [period, setPeriod] = useUrlState('periodo', '90')
   const [show, setShow] = useUrlState('mostrar', 'faltam')
   const [daily, setDaily] = useState(null)
-  const [today, setToday] = useState(brDay)
+  const [cur, setCur] = useState(brPeriod)
   const [labs, setLabs] = useState(null)
   const [history, setHistory] = useState(null)
   const [recurring, setRecurring] = useState([])
@@ -205,17 +225,24 @@ export default function LabInspectionsPage() {
   useEffect(load, [load])
   useEffect(loadHistory, [loadHistory])
   useLiveRefresh(['lab-inspections'], () => { load(); loadHistory() })
-  // virou o dia com a tela aberta (tablet ligado de um dia pro outro): tudo volta a "falta hoje"
+  // virou o período (14h) ou o dia com a tela aberta (tablet ligado o dia todo): recarrega
+  // — os "períodos de hoje" vêm do servidor e zeram na virada do dia
+  const dayRef = useRef(brDay())
   useEffect(() => {
-    const t = setInterval(() => setToday(brDay()), 60e3)
+    const t = setInterval(() => {
+      const p = brPeriod(), d = brDay()
+      if (d !== dayRef.current) { dayRef.current = d; load() }
+      setCur(p)
+    }, 60e3)
     return () => clearInterval(t)
-  }, [])
+  }, [load])
 
   const here = useMemo(() => (labs || []).filter(l => l.building === building), [labs, building])
-  // número na aba do prédio = quantos ainda faltam vistoriar hoje
-  const left = useMemo(() => Object.fromEntries(Object.keys(BUILDINGS).map(b => [b, (labs || []).filter(l => l.building === b && l.last_day !== today).length])), [labs, today])
-  const doneHere = here.filter(l => l.last_day === today).length
-  const shown = show === 'faltam' ? here.filter(l => l.last_day !== today) : here
+  const doneNow = l => !!l.periods?.[cur]
+  // número na aba do prédio = quantos ainda faltam no período de agora
+  const left = useMemo(() => Object.fromEntries(Object.keys(BUILDINGS).map(b => [b, (labs || []).filter(l => l.building === b && !l.periods?.[cur]).length])), [labs, cur])
+  const doneHere = here.filter(doneNow).length
+  const shown = show === 'faltam' ? here.filter(l => !doneNow(l)) : here
   const recHere = recurring.filter(r => r.building === building)
 
   const open = async lab => {
@@ -253,7 +280,7 @@ export default function LabInspectionsPage() {
       <div className={s.buildings} role="radiogroup" aria-label="Prédio">
         {Object.entries(BUILDINGS).map(([k, v]) => (
           <button key={k} role="radio" aria-checked={building === k} className={`${s.building} ${building === k ? s.buildingOn : ''}`} onClick={() => setBuilding(k)}>
-            {v}{labs && <span title="Faltam hoje">{left[k] || '✓'}</span>}
+            {v}{labs && <span title="Faltam no período de agora">{left[k] || '✓'}</span>}
           </button>
         ))}
       </div>
@@ -261,15 +288,15 @@ export default function LabInspectionsPage() {
       {tab === 'vistoriar' && (
         labs === null ? <p className={s.loading}>Carregando…</p> : (
           <>
-            <TodayBar done={doneHere} total={here.length} show={show} onShow={setShow} />
+            <TodayBar done={doneHere} total={here.length} show={show} onShow={setShow} cur={cur} />
             {here.length ? (shown.length ? (
               <ul className={s.labGrid}>
-                {shown.map(l => <LabCard key={l.id} lab={l} today={today} writable={writable} busy={opening === l.id} onOpen={open} />)}
+                {shown.map(l => <LabCard key={l.id} lab={l} cur={cur} writable={writable} busy={opening === l.id} onOpen={open} />)}
               </ul>
             ) : (
               <div className={s.empty}>
-                <h2>Tudo vistoriado hoje no {BUILDINGS[building]}</h2>
-                <p>Amanhã os laboratórios voltam para a lista. <button className="btn btn-ghost" onClick={() => setShow('todos')}>Ver todos</button></p>
+                <h2>Tudo vistoriado {cur === 'manha' ? 'na manhã' : 'na noite'} no {BUILDINGS[building]}</h2>
+                <p>{cur === 'manha' ? 'Às 14h os laboratórios voltam para a lista, para a vistoria da noite.' : 'Amanhã cedo os laboratórios voltam para a lista.'} <button className="btn btn-ghost" onClick={() => setShow('todos')}>Ver todos</button></p>
               </div>
             )) : (
               <div className={s.empty}>
@@ -304,7 +331,7 @@ export default function LabInspectionsPage() {
                       </span>
                       <span className={s.histMain}>
                         <strong>{h.lab_name}</strong>
-                        <span>{fmtWhen(h.finished_at)} · {h.technician_name || 'Técnico'}</span>
+                        <span>{fmtWhen(h.finished_at)}{h.period ? ` · ${DAY_PERIODS[h.period]}` : ''} · {h.technician_name || 'Técnico'}</span>
                         {!!problems.length && <span className={s.problemChips}>{problems.map(p => <em key={p}>{p}</em>)}</span>}
                       </span>
                       <span className={s.histSum}>

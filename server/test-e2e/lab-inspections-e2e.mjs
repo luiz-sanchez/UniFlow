@@ -96,7 +96,19 @@ expect('laboratório sem vistoria: sem last_day', r.j?.find(l => l.id === emptyL
 r = await call('ti', 'GET', `${P}/daily?days=14`)
 const dayRow = r.j?.rows?.find(x => x.lab_id === lab.id)
 expect('dia a dia: hoje = Brasília', r.j?.today, brToday)
-expect('dia a dia: 2 vistorias hoje, com problema', `${dayRow?.day}|${dayRow?.n}|${dayRow?.nok > 0}`, `${brToday}|2|true`)
+expect('dia a dia: 2 vistorias hoje, com problema', `${r.j?.rows?.filter(x => x.lab_id === lab.id && x.day === brToday).reduce((a, x) => a + x.n, 0)}|${dayRow?.nok > 0}`, '2|true')
+// ── Dois períodos por dia: Manhã até 13:59, Noite 14:00 em diante (Brasília) ──
+const sqlx = (s, args = []) => fetch(BASE + '/__mock/sql', { method: 'POST', body: JSON.stringify({ sql: s, args }) }).then(x => x.json())
+await sqlx(`UPDATE lab_inspections SET finished_at = datetime(date('now','-3 hours'), '+13 hours') WHERE id = ?`, [insp.id]) // 10:00 Brasília
+await sqlx(`UPDATE lab_inspections SET finished_at = datetime(date('now','-3 hours'), '+17 hours', '+30 minutes') WHERE id = ?`, [second.id]) // 14:30 Brasília
+r = await call('ti', 'GET', `${P}/labs`)
+const per = r.j?.find(l => l.id === lab.id)?.periods || {}
+expect('períodos de hoje: manhã = 1ª, noite = 2ª', `${per.manha?.id === insp.id}|${per.noite?.id === second.id}`, 'true|true')
+expect('laboratório sem vistoria: sem períodos', JSON.stringify(r.j?.find(l => l.name === 'Laboratório 22')?.periods), '{}')
+r = await call('ti', 'GET', `${P}/daily?days=14`)
+expect('dia a dia separa manhã e noite', r.j?.rows?.filter(x => x.lab_id === lab.id && x.day === brToday).map(x => `${x.period}:${x.n}`).sort().join(','), 'manha:1,noite:1')
+r = await call('ti', 'GET', `${P}?days=30`)
+expect('histórico diz o período', r.j?.find(i => i.id === second.id)?.period, 'noite')
 expect('Auditor vê o dia a dia', (await call('aud', 'GET', `${P}/daily`)).s, 200)
 const labs74 = (await call('admin', 'GET', `${P}/labs`)).j || []
 const by = n => labs74.find(l => l.name === `Laboratório ${n}`)?.building

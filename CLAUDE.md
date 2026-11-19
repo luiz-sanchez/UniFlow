@@ -191,6 +191,10 @@ No navegador do app: `localStorage.setItem('token', ...)` em `127.0.0.1`. **Rein
   "Laboratório NN"): dia = Brasília (`date(finished_at,'-3 hours')`, `brDay()` no front). Cartão "Feita hoje às HH:MM" / "Falta hoje",
   faixa "Faltam N hoje" com filtro (padrão "Faltam hoje"), nº na aba do prédio = faltam hoje; Histórico → "Dia a dia" (lab × 14 dias,
   `GET /daily`). Lembrete automático de quem não fez: ainda não existe.
+  **Dois períodos por dia** (19/11/2026, pedido do Luiz): Manhã = finalizada até 13:59 de Brasília, Noite = 14:00 em diante —
+  pelo horário de FINALIZAR, sem coluna nova (`PERIOD_SQL` na rota, `brPeriod()`/`DAY_PERIODS` em `utils/labInspections.js`).
+  `/labs` traz `periods: {manha, noite}` de hoje; cartão mostra as duas linhas ("não foi feita" se a manhã passou), faixa/filtro/nº da
+  aba = período de agora; `/daily` agrupa por período (grade com M/N por dia, x/28); histórico mostra o período.
   **Modo tablet** (botão na tela; `store/tabletModeStore.js`, lembrado no aparelho em `localStorage uniflow-vistoria-tablet`): nas rotas
   /vistorias o AppLayout some com menu e barra de cima, pede tela cheia (o navegador só deixa num toque → 1º toque na tela reentra) e
   segura a tela acesa (Wake Lock). **Tablet compartilhado** (18/11/2026, pedido do Luiz): com o modo tablet ligado, "Sair" (botão
